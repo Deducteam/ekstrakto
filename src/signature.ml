@@ -14,28 +14,30 @@ let rec get_symbols b e =
   |_ -> ()
   ;;
 
-let rec generate_iota p =
+let rec generate_iota oc p =
     match p with
-    |0          -> ""
-    |x          -> "zen.term (zen.iota) -> " ^ (generate_iota (x - 1));;
+    |0          -> () 
+    |x          -> Printf.fprintf oc "zen.term (zen.iota) ⇒ %a" generate_iota (x - 1);;
 
-let get_type b n =
-    match (b, n) with
-     (0, true)           -> "zen.prop"
-    |(0, false)           -> "zen.term (zen.iota)"
-    |(n, false)          -> (generate_iota n) ^ " zen.term (zen.iota)"
-    |(n, true)           -> (generate_iota n) ^ " zen.prop";;
+let get_type oc (b, n) = 
+    match (b, n) with 
+     (0, true)           -> Printf.fprintf oc "zen.prop"
+    |(0, false)           -> Printf.fprintf oc "zen.term (zen.iota)"
+    |(n, false)          -> Printf.fprintf oc "%a zen.term (zen.iota)" generate_iota n
+    |(n, true)           -> Printf.fprintf oc "%a zen.prop" generate_iota n;;
 
-let print_symbols ht = 
-    Hashtbl.iter (fun x n -> Printf.printf "def %s : %s.\n%!" x (get_type (fst n) (snd n))) ht;; 
+(* let print_symbols ht = 
+    Hashtbl.iter (fun x n -> Printf.printf "def %s : %s.\n%!" x (get_type (fst n) (snd n))) ht;; *)
 
 (* Generating signature file *)
 let generate_signature_file name ht =
-    let name_dk = name ^ ".dk" in  
+    let name_dk = name ^ ".lp" in  
     let name = ((Sys.getcwd ()) ^ "/" ^ name ^ "/" ^ name_dk) in 
     let oc = open_out name in
         Printf.printf "\t ==== Generating signature file ====\n";
-        Hashtbl.iter (fun x n -> Printf.fprintf oc "def %s : %s.\n" x (get_type (fst n) (snd n))) ht;
+        Printf.fprintf oc "require %s" name;
+        Printf.fprintf oc "require logic.zen as zen\n";
+        Hashtbl.iter (fun x n -> Printf.fprintf oc "symbol {|%s|} : %a\n" x get_type (fst n, snd n)) ht;
         close_out oc;
         Printf.printf "%s \027[32m OK \027[0m\n\n%!" name;;
 
