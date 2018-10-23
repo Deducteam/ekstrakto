@@ -35,7 +35,6 @@ let generate_signature_file name ht =
     let name = ((Sys.getcwd ()) ^ "/" ^ name ^ "/" ^ name_dk) in 
     let oc = open_out name in
         Printf.printf "\t ==== Generating signature file ====\n";
-        Printf.fprintf oc "require %s" name;
         Printf.fprintf oc "require logic.zen as zen\n";
         Hashtbl.iter (fun x n -> Printf.fprintf oc "symbol {|%s|} : %a\n" x get_type (fst n, snd n)) ht;
         close_out oc;

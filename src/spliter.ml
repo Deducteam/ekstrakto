@@ -116,7 +116,6 @@ let rec get_axioms inferences lemmas =
               else
                   x::(check_axiom l' lemmas);;
 
-
 let _ =
   match Sys.argv with
   | [|_ ; fname|] ->
@@ -124,8 +123,8 @@ let _ =
       let res : Phrase.tpphrase list = parse_file fname in
       let inferences = get_inferences res in
       let premises = get_sequent inferences in
-      (* let axioms = get_axioms premises (get_lemmas premises) in *)
-      (* let l_goal = last_goal premises in *)
+      let axioms = get_axioms premises (get_lemmas premises) in 
+      let l_goal = last_goal premises in
       (* let () = List.iter (fun m -> Printf.printf "%s" m) (get_axioms premises (get_lemmas premises)) in *)
       let name = (Filename.remove_extension (Filename.basename fname)) in 
       if Sys.command ("mkdir -p " ^ (Sys.getcwd ()) ^ "/" ^ name ^ "/lemmas") = 0 
@@ -138,8 +137,9 @@ let _ =
      (* Hashtbl.iter (fun x y -> Printf.printf "%s : %s\n%!" x (Expr.expr_to_string y)) Phrase.name_formula_tbl *)
       insert_symbols Phrase.name_formula_tbl;
       Signature.generate_signature_file name Signature.symbols_table;
-      (*Printf.printf "Debug 1\n%!";
-      Proof.generate_dk name axioms name premises l_goal;*)
+      (* Printf.printf "Debug 1\n%!"; *)
+      Proof.generate_dk name axioms name premises l_goal;
+     
       Signature.generate_makefile name;
   | _             ->
       Printf.eprintf "Usage: %s file.p\n%!" Sys.argv.(0);
