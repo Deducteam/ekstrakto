@@ -139,7 +139,8 @@ let _ =
       Signature.generate_signature_file name Signature.symbols_table;
       (* Printf.printf "Debug 1\n%!"; *)
       Proof.generate_dk name axioms name premises l_goal;
-     
+      if Sys.command ("mkdir -p " ^ (Sys.getcwd ()) ^ "/" ^ name ^ "/logic") = 0 then ();
+      if Sys.command ("cp -r ~/.ekstrakto/logic/*.lp " ^ (Sys.getcwd ()) ^ "/" ^ name ^ "/logic/") = 0 then ();
       Signature.generate_makefile name;
   | _             ->
       Printf.eprintf "Usage: %s file.p\n%!" Sys.argv.(0);

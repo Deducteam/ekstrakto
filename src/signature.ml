@@ -47,27 +47,27 @@ let generate_makefile name =
         Printf.fprintf oc "DIR?=/usr/local/lib/\n";
         Printf.fprintf oc "TIMELIMIT?=10s\n";
         Printf.fprintf oc "TPTP=$(wildcard lemmas/*.p)\n";
-        Printf.fprintf oc "DKS=$(TPTP:.p=.dk)\n";
-        Printf.fprintf oc "DKO=$(DKS:.dk=.dko)\n";
+        Printf.fprintf oc "DKS=$(TPTP:.p=.lp)\n";
+        Printf.fprintf oc "DKO=$(DKS:.lp=.lpo)\n";
         (* Printf.fprintf oc "all: proof_%s.dko $(DKS)\n" name; *)
-        Printf.fprintf oc "all: %s.dko $(DKO) $(DKS)\n" name;
+        Printf.fprintf oc "all: proof_%s.lpo %s.lpo $(DKO) $(DKS)\n" name name;
         Printf.fprintf oc "\n";
 
-        Printf.fprintf oc "lemmas/%%.dk : lemmas/%%.p\n";
+        Printf.fprintf oc "lemmas/%%.lp : lemmas/%%.p\n";
         Printf.fprintf oc "\tzenon_modulo -itptp -max-time $(TIMELIMIT) -odkterm -sig %s $< > $@\n" name;
         Printf.fprintf oc "\n";
 
-        Printf.fprintf oc "lemmas/%%.dko : lemmas/%%.dk %s.dko\n" name;
-        Printf.fprintf oc "\tdkcheck -nl -I $(DIR) $< -e\n";
+        Printf.fprintf oc "lemmas/%%.lpo : lemmas/%%.lp %s.lpo\n" name;
+        Printf.fprintf oc "\tlambdapi --gen-obj $< \n";
         Printf.fprintf oc "\n";
 
-        Printf.fprintf oc "%s.dko: %s.dk\n" name name;
-        Printf.fprintf oc "\tdkcheck -nl -I $(DIR) $< -e\n";
+        Printf.fprintf oc "%s.lpo: %s.lp\n" name name;
+        Printf.fprintf oc "\tlambdapi --gen-obj $< \n";
         Printf.fprintf oc "\n";
 
-        (* Printf.fprintf oc "proof_%s.dko : proof_%s.dk %s.dko $(DKO)\n" name name name;
-        Printf.fprintf oc "\tdkcheck -nl -I $(DIR) -I lemmas $< -e\n";
-        Printf.fprintf oc "\n"; *)
+        Printf.fprintf oc "proof_%s.lpo : proof_%s.lp %s.lpo $(DKO)\n" name name name;
+        Printf.fprintf oc "\tlambdapi --gen-obj $< \n";
+        Printf.fprintf oc "\n"; 
 
         Printf.printf "%s\t \027[32m OK \027[0m\n\n%!" name_file;
         close_out oc;;

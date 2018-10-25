@@ -73,6 +73,7 @@ let rec generate_dk name l signame proof_tree goal =
         Printf.fprintf oc "\n";
         print_lemmas oc (proof_tree, proof_tree);
         (* Printf.fprintf oc "%a." make_one_proof (goal, proof_tree); *)
+        
         close_out oc;
         Printf.printf "%s \027[32m OK \027[0m\n\n%!" name_file
 and
