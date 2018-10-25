@@ -50,7 +50,9 @@ let generate_makefile name =
         Printf.fprintf oc "DKS=$(TPTP:.p=.lp)\n";
         Printf.fprintf oc "DKO=$(DKS:.lp=.lpo)\n";
         (* Printf.fprintf oc "all: proof_%s.dko $(DKS)\n" name; *)
-        Printf.fprintf oc "all: proof_%s.lpo %s.lpo $(DKO) $(DKS)\n" name name;
+        Printf.fprintf oc "all: %s.lpo $(DKO) $(DKS)\n" name;
+        Printf.fprintf oc "lemmas_lpo: %s.lpo $(DKO) $(DKS)\n" name;
+        Printf.fprintf oc "proof: proof_%s.lpo \n" name;
         Printf.fprintf oc "\n";
 
         Printf.fprintf oc "lemmas/%%.lp : lemmas/%%.p\n";
