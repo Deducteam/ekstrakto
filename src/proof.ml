@@ -14,7 +14,7 @@ let rec print_dk_type oc (ex, signame) =
     |Eapp (Evar("=",_),e1::e2::[],_)-> out "zen.equal (zen.iota) %a" print_dk_type_vars ([e1; e2], signame)
     |Eapp (Evar (e, _), l, _)       -> out "%s %a" (print_var e signame) print_dk_type_vars (l, signame)
     |Eor (e1, e2, _)                -> out "zen.or (%a) (%a)" print_dk_type (e1, signame) print_dk_type (e2, signame)
-    |Eall (v, e, _)                 -> out "zen.forall (zen.iota) (λ %a, %a)" print_dk_type (v, "") print_dk_type (e, signame) 
+    |Eall (v, e, _)                 -> out "zen.forall (zen.iota) (λ (%a : zen.term zen.iota), %a)" print_dk_type (v, "") print_dk_type (e, signame) 
     |Eex (v, e, _)                  -> out "zen.exists (%a) (%a)" print_dk_type (v, "") print_dk_type (e, signame) 
     |Enot (e, _)                    -> out "zen.not (%a)" print_dk_type (e, signame)
     |Eimply(a, b, _)                -> out "zen.imp (%a) (%a)" print_dk_type (a, signame) print_dk_type (b, signame)
