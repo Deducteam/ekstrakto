@@ -12,9 +12,9 @@ let rec print_dk_type oc (ex, signame) =
     |Evar (x, _)                    -> out "%s" x
     |Eapp (Evar (e, _), [], _)      -> out "%s" (print_var e signame)
     |Eapp (Evar("=",_),e1::e2::[],_)-> out "zen.equal (zen.iota) %a" print_dk_type_vars ([e1; e2], signame)
-    |Eapp (Evar (e, _), l, _)       -> out "%s %a" (print_var e signame) print_dk_type_vars (l, signame)
+    |Eapp (Evar (e, _), l, _)       -> out "(%s %a)" (print_var e signame) print_dk_type_vars (l, signame)
     |Eor (e1, e2, _)                -> out "zen.or (%a) (%a)" print_dk_type (e1, signame) print_dk_type (e2, signame)
-    |Eall (v, e, _)                 -> out "zen.forall (zen.iota) (λ %a, %a)" print_dk_type (v, "") print_dk_type (e, signame) 
+    |Eall (v, e, _)                 -> out "zen.forall (zen.iota) (λ (%a : (zen.term zen.iota)), %a)" print_dk_type (v, "") print_dk_type (e, signame) 
     |Eex (v, e, _)                  -> out "zen.exists (%a) (%a)" print_dk_type (v, "") print_dk_type (e, signame) 
     |Enot (e, _)                    -> out "zen.not (%a)" print_dk_type (e, signame)
     |Eimply(a, b, _)                -> out "zen.imp (%a) (%a)" print_dk_type (a, signame) print_dk_type (b, signame)
@@ -63,6 +63,7 @@ let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in 
     let oc = open_out name_file in
         Printf.printf "\t ==== Generating the proof file ====\n%!";
+        Printf.fprintf oc "require %s\n" name;
         print_requires oc proof_tree;
         Printf.fprintf oc "\n";
         Printf.fprintf oc "require logic.zen as zen\n\n";
