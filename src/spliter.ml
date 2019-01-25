@@ -86,23 +86,27 @@ let generate_tptp (name, lines) =
     close_out oc;
   Printf.printf "\t \027[32m OK \027[0m\n%!";;           
 
+(* generate a file for each step of the proof *)
 let rec generate_files tstp_fname premises = 
   match premises with
   |[] -> ()
   |(name, l)::l' -> 
     generate_tptp (((Sys.getcwd ())^ "/" ^ tstp_fname ^ "/lemmas/" ^ name ^ ".p"), l);
     generate_files tstp_fname l';;
+    
 let insert_symbols ht = 
   Hashtbl.iter (fun x y -> Signature.get_symbols true y) ht;;
 
 (* get only the name of each inference (intermediate lemma) *)
 let get_lemmas l = List.map (fun e -> fst e) l;; 
 
+(* get the goal of a TSTP trace (last line in the file) *)
 let rec last_goal l = match l with
    []       -> failwith "Goal to prove is not provided"
   |(g, axs)::[] -> g
   |_::l'    -> last_goal l';;
 
+(* get all axioms used in each step of the proof *)
 let rec get_axioms inferences lemmas =
   match inferences with
    [] -> []
@@ -116,6 +120,7 @@ let rec get_axioms inferences lemmas =
               else
                   x::(check_axiom l' lemmas);;
 
+(* starting point of the program *)
 let _ =
   match Sys.argv with
   | [|_ ; fname|] ->

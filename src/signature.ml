@@ -1,6 +1,7 @@
 open Expr;;
 let symbols_table = Hashtbl.create 100;;
 
+(* get all the symbols used in the TSTP file *)
 let rec get_symbols b e =  
   match e with
   |Eapp (Evar("=", _), l, _)  -> List.iter (get_symbols false) l
@@ -14,15 +15,17 @@ let rec get_symbols b e =
   |_ -> ()
   ;;
 
+(* print the type of a term correspanding to its arity *)
 let rec generate_iota oc p =
     match p with
     |0          -> () 
     |x          -> Printf.fprintf oc "zen.term (zen.iota) ⇒ %a" generate_iota (x - 1);;
 
+(* print the type of a term or a proposition in lambdapi *)
 let get_type oc (b, n) = 
     match (b, n) with 
      (0, true)           -> Printf.fprintf oc "zen.prop"
-    |(0, false)           -> Printf.fprintf oc "zen.term (zen.iota)"
+    |(0, false)          -> Printf.fprintf oc "zen.term (zen.iota)"
     |(n, false)          -> Printf.fprintf oc "%a zen.term (zen.iota)" generate_iota n
     |(n, true)           -> Printf.fprintf oc "%a zen.prop" generate_iota n;;
 
@@ -40,6 +43,7 @@ let generate_signature_file name ht =
         close_out oc;
         Printf.printf "%s \027[32m OK \027[0m\n\n%!" name;;
 
+(* generate a makefile to automate the proof generating and proof checking of all files *)
 let generate_makefile name = 
     let name_file = ((Sys.getcwd ()) ^ "/" ^ name ^ "/Makefile" ) in
     let oc = open_out  name_file in
