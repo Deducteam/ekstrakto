@@ -84,7 +84,7 @@ let upperid = [ 'A' - 'Z' ]
 let lowerid = [ 'a' - 'z' ]
 let idchar = [ 'A' - 'Z' 'a' - 'z' '0' - '9' '_' ]
 let all_characters = [ '_' ]
-  
+
 rule token = parse
   | "#@" ([^ '\010']* as annot)
                      { ANNOT annot }
@@ -122,9 +122,7 @@ rule token = parse
   | "inference"      { INFERENCE }
   | "theory"         { THEORY }
   | "introduced"     { INTRODUCED }
-  | "unknown"        { UNKNOWN }
   | "ac"             { AC }
-  | "equality"       { EQUALITY }
   | "file"           { FILE }
   | "creator"        { CREATOR }
   | "cnf"            { INPUT_CLAUSE }
@@ -139,7 +137,7 @@ rule token = parse
   | upperid idchar * { UIDENT (Lexing.lexeme lexbuf) }
   | '$'? lowerid idchar * { LIDENT (Lexing.lexeme lexbuf) }
   | all_characters * { ANYCHAR (Lexing.lexeme lexbuf) }
-      
+
   | ['+' '-']? ['0' - '9']+
         { INT (Lexing.lexeme lexbuf) }
   | ['+' '-']? ['0' - '9']+ '/' ['0' - '9']+

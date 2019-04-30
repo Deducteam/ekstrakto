@@ -28,7 +28,7 @@ let cnf_to_formula l =
     | [] -> assert false
     | a::l2 -> List.fold_left (fun x y -> eor (x,y)) a l2
   in
-  let body =  Expr.substitute subs body in	
+  let body =  Expr.substitute subs body in
   mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs) body
 ;;
 
@@ -56,7 +56,6 @@ let cnf_to_formula l =
 %token INTRODUCED
 %token UNKNOWN
 %token AC
-%token EQUALITY
 %token THEORY
 %token CREATOR
 %token INPUT_CLAUSE
@@ -219,7 +218,7 @@ optional:
 | /* mot vide */ { None }
 | COMMA source optional_info { Some ($2) }
 ;
-    
+
 source:
 | dag_source { $1 }
 | internal_source { Phrase.Other $1 }
@@ -241,53 +240,52 @@ dag_source:
 
 internal_source:
 | INTRODUCED OPEN LIDENT optional_info CLOSE { $3 }
-        
+
 external_source:
 | file_source { $1 }
 | theory { $1 }
 | creator_source { $1 }
 ;
-    
+
 file_source:
 | FILE OPEN LIDENT file_info CLOSE { $3 }
 ;
-    
+
 file_info:
 | /*mot vide*/ { None }
 | COMMA LIDENT { Some ($2) }
 ;
-    
+
 theory:
 | THEORY OPEN theory_name optional_info CLOSE { "Theory" }
 ;
-    
+
 theory_name:
 | AC { None  }
-| EQUALITY { None }
 ;
-    
+
 creator_source:
-| CREATOR OPEN LIDENT optional_info CLOSE { "Creator" } 
+| CREATOR OPEN LIDENT optional_info CLOSE { "Creator" }
 ;
 
 optional_info:
 | /*mot vide*/ { [] }
 | COMMA useful_info { [$2] }
 ;
-    
+
 useful_info:
 | LBRACKET info_items RBRACKET { $2 }
 ;
-    
+
 info_items:
 | /*mot vide*/ { [] }
 | info_item { [$1] }
 | info_item COMMA info_items { $1 :: $3 }
 ;
-    
+
 info_item:
 | LIDENT { Phrase.Cte $1 }
 | LIDENT OPEN info_items CLOSE { Phrase.Fun ($1,$3) }
 ;
-    
+
 %%
