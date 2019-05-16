@@ -115,13 +115,7 @@ phrase:
       { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT
      { Hashtbl.add Phrase.name_formula_tbl $3 $7; Phrase.Formula_annot (ns_hyp $3, "tff_" ^ $5, $7, $8) }
-  | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA type_def CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
-  | INPUT_TFF_FORMULA OPEN INT COMMA LIDENT COMMA formula CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
-  | INPUT_TFF_FORMULA OPEN INT COMMA LIDENT COMMA type_def CLOSE DOT
      { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
   | ANNOT                          { Phrase.Annotation $1 }
 ;
