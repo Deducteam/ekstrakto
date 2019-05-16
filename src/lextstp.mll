@@ -90,6 +90,10 @@ rule token = parse
                      { ANNOT annot }
   | "#" [^ '\010']*
                      { token lexbuf }
+    | "%@" ([^ '\010']* as annot)
+                     { ANNOT annot }
+  | "%" [^ '\010']*
+                     { token lexbuf }
   | '\010'           { adjust_pos lexbuf; token lexbuf }
   | "/*" ([^ '*']* | '*'+ [^ '/' '*'])* '*'+ '/' {
      adjust_pos lexbuf;
