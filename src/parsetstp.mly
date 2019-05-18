@@ -19,6 +19,14 @@ let rec mk_quant q vs body =
           q (h, body)
 ;;
 
+let quantify_formula f =
+	let f1 = Expr.get_fv f in
+	let vs = Misc.list_sort_unique String.compare f1 in
+	let subs = List.map (fun n -> tvar_none n, tvar n type_iota) vs in
+	
+	let body = Expr.substitute subs f in
+	mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs ) body;; 
+
 let cnf_to_formula l =
   let l1 = List.flatten (List.map Expr.get_fv l) in
   let vs = Misc.list_sort_unique String.compare l1 in
@@ -114,7 +122,7 @@ phrase:
   | INPUT_CLAUSE OPEN LIDENT COMMA LIDENT COMMA cnf_formula optional CLOSE DOT
       { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT
-     { Hashtbl.add Phrase.name_formula_tbl $3 $7; Phrase.Formula_annot (ns_hyp $3, "tff_" ^ $5, $7, $8) }
+     { Hashtbl.add Phrase.name_formula_tbl $3 (quantify_formula $7); Phrase.Formula_annot (ns_hyp $3, "tff_" ^ $5, quantify_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA type_def CLOSE DOT
      { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
   | ANNOT                          { Phrase.Annotation $1 }
