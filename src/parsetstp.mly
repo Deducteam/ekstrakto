@@ -19,6 +19,14 @@ let rec mk_quant q vs body =
           q (h, body)
 ;;
 
+let quantify_formula f =
+	let f1 = Expr.get_fv f in
+	let vs = Misc.list_sort_unique String.compare f1 in
+	let subs = List.map (fun n -> tvar_none n, tvar n type_iota) vs in
+	
+	let body = Expr.substitute subs f in
+	mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs ) body;; 
+
 let cnf_to_formula l =
   let l1 = List.flatten (List.map Expr.get_fv l) in
   let vs = Misc.list_sort_unique String.compare l1 in
@@ -28,7 +36,7 @@ let cnf_to_formula l =
     | [] -> assert false
     | a::l2 -> List.fold_left (fun x y -> eor (x,y)) a l2
   in
-  let body =  Expr.substitute subs body in	
+  let body =  Expr.substitute subs body in
   mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs) body
 ;;
 
@@ -56,7 +64,6 @@ let cnf_to_formula l =
 %token INTRODUCED
 %token UNKNOWN
 %token AC
-%token EQUALITY
 %token THEORY
 %token CREATOR
 %token INPUT_CLAUSE
@@ -114,15 +121,9 @@ phrase:
       { Hashtbl.add Phrase.name_formula_tbl $3 $7; Phrase.Formula_annot (ns_hyp $3, $5, $7, $8) }
   | INPUT_CLAUSE OPEN LIDENT COMMA LIDENT COMMA cnf_formula optional CLOSE DOT
       { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
-  | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula COMMA LIDENT CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, Some $9) }
-  | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
+  | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT
+     { Hashtbl.add Phrase.name_formula_tbl $3 (quantify_formula $7); Phrase.Formula_annot (ns_hyp $3, "tff_" ^ $5, quantify_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA type_def CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
-  | INPUT_TFF_FORMULA OPEN INT COMMA LIDENT COMMA formula CLOSE DOT
-     { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
-  | INPUT_TFF_FORMULA OPEN INT COMMA LIDENT COMMA type_def CLOSE DOT
      { Phrase.Formula (ns_hyp $3, "tff_" ^ $5, $7, None) }
   | ANNOT                          { Phrase.Annotation $1 }
 ;
@@ -219,7 +220,7 @@ optional:
 | /* mot vide */ { None }
 | COMMA source optional_info { Some ($2) }
 ;
-    
+
 source:
 | dag_source { $1 }
 | internal_source { Phrase.Other $1 }
@@ -241,53 +242,52 @@ dag_source:
 
 internal_source:
 | INTRODUCED OPEN LIDENT optional_info CLOSE { $3 }
-        
+
 external_source:
 | file_source { $1 }
 | theory { $1 }
 | creator_source { $1 }
 ;
-    
+
 file_source:
 | FILE OPEN LIDENT file_info CLOSE { $3 }
 ;
-    
+
 file_info:
 | /*mot vide*/ { None }
 | COMMA LIDENT { Some ($2) }
 ;
-    
+
 theory:
 | THEORY OPEN theory_name optional_info CLOSE { "Theory" }
 ;
-    
+
 theory_name:
 | AC { None  }
-| EQUALITY { None }
 ;
-    
+
 creator_source:
-| CREATOR OPEN LIDENT optional_info CLOSE { "Creator" } 
+| CREATOR OPEN LIDENT optional_info CLOSE { "Creator" }
 ;
 
 optional_info:
 | /*mot vide*/ { [] }
 | COMMA useful_info { [$2] }
 ;
-    
+
 useful_info:
 | LBRACKET info_items RBRACKET { $2 }
 ;
-    
+
 info_items:
 | /*mot vide*/ { [] }
 | info_item { [$1] }
 | info_item COMMA info_items { $1 :: $3 }
 ;
-    
+
 info_item:
 | LIDENT { Phrase.Cte $1 }
 | LIDENT OPEN info_items CLOSE { Phrase.Fun ($1,$3) }
 ;
-    
+
 %%
