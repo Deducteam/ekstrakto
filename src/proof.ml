@@ -89,7 +89,7 @@ let rec generate_dk name l signame proof_tree goal =
         Printf.fprintf oc "\n ≔ \n";
         (* Printf.fprintf oc "%a" generate_abs l; *)
         Printf.fprintf oc "\n";
-        print_lemmas oc (proof_tree, proof_tree);
+        print_lemmas oc (List.rev proof_tree, proof_tree);
         (* Printf.fprintf oc "%a." make_one_proof (goal, proof_tree); *)
 
         close_out oc;

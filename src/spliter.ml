@@ -98,7 +98,8 @@ let insert_symbols ht =
   Hashtbl.iter (fun x y -> Signature.get_symbols true y) ht;;
 
 (* get only the name of each inference (intermediate lemma) *)
-let get_lemmas l = List.map (fun e -> fst e) l;; 
+let get_lemmas l = List.map fst l;; 
+
 
 (* get the goal of a TSTP trace (last line in the file) *)
 let rec last_goal l = match l with
