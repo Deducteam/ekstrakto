@@ -1014,8 +1014,8 @@ let get_tvar e = List.rev (get_tvar_aux [] e)
 
 type goalness = int
 
-let tbl_term = ref (Hashtbl.create 42)
-let tbl_prop = ref (Hashtbl.create 42)
+let tbl_term : rwrt_tbl ref = ref (Hashtbl.create 42)
+let tbl_prop : rwrt_tbl ref = ref (Hashtbl.create 42)
 
 module Arith = struct
   let type_int = eapp (tvar "Z" type_type, [])

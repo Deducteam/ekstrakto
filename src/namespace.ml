@@ -1,4 +1,4 @@
-(*  Copyright 2006 INRIA  *)
+(* Taken from git@github.com:Deducteam/zenon_modulo.git *)
 
 let prefix = "zenon_";;
 

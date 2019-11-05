@@ -1,5 +1,7 @@
 {
 
+(* Taken from git@github.com:Deducteam/zenon_modulo.git *)
+
 open Lexing
 open Parsetstp
 open Printf

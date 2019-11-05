@@ -1,4 +1,4 @@
-(*  Copyright 2003 INRIA  *)
+(* Taken from git@github.com:Deducteam/zenon_modulo.git *)
 
 (* functions missing from the standard library *)
 

@@ -1,4 +1,4 @@
-(*  Copyright 2004 INRIA  *)
+(* Taken from git@github.com:Deducteam/zenon_modulo.git *)
 
 open Expr
 open Hashtbl
@@ -25,14 +25,15 @@ type zphrase =
 
 exception Bad_arg
 
-let name_formula_tbl = Hashtbl.create 127
+let name_formula_tbl : (string, expr) Hashtbl.t = Hashtbl.create 127
 
 let extract_args l =
   List.map (function Evar _ as v -> v | _ -> raise Bad_arg) l
 
+(*FIXME? only check that there is no consecutive identical elements *)
 let rec no_duplicates = function
   | [] | [ _ ] -> true
-  | h1 :: h2 :: t -> h1 <> h2 && no_duplicates (h2 :: t)
+  | h1 :: (h2 :: _ as l) -> h1 <> h2 && no_duplicates l
 
 let check_args env args =
   try
