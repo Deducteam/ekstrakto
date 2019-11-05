@@ -78,7 +78,7 @@ let print_goal oc (name, l) =
   fprintf oc "fof(%s, conjecture, (%a))." name print_hypothesis (name, l)
 
 (* generate single TPTP file *)
-let generate_tptp (name, lines) =
+let generate_tptp name lines =
   printf "Process problem %s%!" name;
   let goal_name = Filename.remove_extension (Filename.basename name) in
   let oc = open_out name in
@@ -91,8 +91,8 @@ let rec generate_files tstp_fname premises =
   match premises with
   | [] -> ()
   | (name, l)::l' ->
-     generate_tptp
-       (((Sys.getcwd ())^ "/" ^ tstp_fname ^ "/lemmas/" ^ name ^ ".p"), l);
+     let fname = Sys.getcwd() ^ "/" ^ tstp_fname ^ "/lemmas/" ^ name ^ ".p" in
+     generate_tptp fname l;
      generate_files tstp_fname l'
 
 let insert_symbols ht =
@@ -105,8 +105,8 @@ let get_lemmas l = List.map fst l
 let rec last_goal l =
   match l with
   | [] -> failwith "Goal to prove is not provided"
-  |(g, axs)::[] -> g
-  |_::l' -> last_goal l'
+  | [g, _] -> g
+  | _::l' -> last_goal l'
 
 (* get all axioms used in each step of the proof *)
 let rec get_axioms inferences lemmas =
@@ -125,36 +125,36 @@ and check_axiom l lemmas =
 let _ =
   match Sys.argv with
   | [|_ ; fname|] ->
-      let res : Phrase.tpphrase list = parse_file fname in
-      let inferences = get_inferences res in
-      let premises = get_sequent inferences in
-      let axioms = get_axioms premises (get_lemmas premises) in
-      let l_goal = last_goal premises in
-      (* let () = List.iter (fun m -> printf "%s" m)
-         (get_axioms premises (get_lemmas premises)) in *)
-      let name = (Filename.remove_extension (Filename.basename fname)) in
-      let cmd = "mkdir -p " ^ (Sys.getcwd ()) ^ "/" ^ name ^ "/lemmas" in
-      if Sys.command cmd = 0 then ()
-      else printf "Error while creating %s/lemmas folder " name;
-      printf "\t ==== Generating %i TPTP Problems from %s ==== \n%!"
-        (List.length premises) fname;
-      generate_files name premises;
-      printf "\n%!";
-      (* Printing all formulas in name_formula_tbl *)
-      (* Hashtbl.iter
-         (fun x y -> printf "%s : %s\n%!" x (Expr.expr_to_string y))
-         Phrase.name_formula_tbl *)
-      insert_symbols Phrase.name_formula_tbl;
-      Signature.generate_signature_file name Signature.symbols_table;
-      (* printf "Debug 1\n%!"; *)
-      Proof.generate_dk name axioms name premises l_goal;
-      let cmd = "mkdir -p " ^ (Sys.getcwd ()) ^ "/" ^ name ^ "/logic" in
-      if Sys.command cmd = 0 then ();
-      let cmd =
-        "cp -r ~/.ekstrakto/logic/*.lp " ^ (Sys.getcwd()) ^ "/"
-        ^ name ^ "/logic/" in
-      if Sys.command cmd = 0 then ();
-      Signature.generate_makefile name;
+     let res : Phrase.tpphrase list = parse_file fname in
+     let inferences = get_inferences res in
+     let premises = get_sequent inferences in
+     let axioms = get_axioms premises (get_lemmas premises) in
+     let l_goal = last_goal premises in
+     (* let () = List.iter (fun m -> printf "%s" m)
+        (get_axioms premises (get_lemmas premises)) in *)
+     let name = Filename.remove_extension (Filename.basename fname) in
+     let cwd = Sys.getcwd () in
+     let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/lemmas" in
+     if Sys.command cmd != 0 then
+       (printf "Error while creating the folder %s/lemmas\n" name; exit 1);
+     printf "\t ==== Generating %i TPTP Problems from %s ==== \n%!"
+       (List.length premises) fname;
+     generate_files name premises;
+     printf "\n%!";
+     (* Printing all formulas in name_formula_tbl *)
+     (* Hashtbl.iter
+        (fun x y -> printf "%s : %s\n%!" x (Expr.expr_to_string y))
+        Phrase.name_formula_tbl *)
+     insert_symbols Phrase.name_formula_tbl;
+     Signature.generate_signature_file name Signature.symbols_table;
+     Proof.generate_dk name axioms name premises l_goal;
+     let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/logic" in
+     if Sys.command cmd != 0 then
+       (printf "Error while creating the folder %s/logic\n" name; exit 1);
+     let cmd =
+       "cp -r ~/.ekstrakto/logic/*.lp " ^ cwd ^ "/" ^ name ^ "/logic/" in
+     if Sys.command cmd = 0 then ();
+     Signature.generate_makefile name;
   | _  ->
-      eprintf "Usage: %s file.p\n%!" Sys.argv.(0);
-      exit 1
+     eprintf "Usage: %s file.p\n%!" Sys.argv.(0);
+     exit 1
