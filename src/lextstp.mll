@@ -32,7 +32,7 @@ module Error = struct
   let warn msg =
     if !warnings_flag then begin
       print "Zenon warning: " msg;
-      got_warning := true;
+      got_warning := true
     end
   
   let err msg = print "Zenon error: " msg
@@ -40,8 +40,7 @@ module Error = struct
   let errpos pos msg =
     let s = sprintf "File \"%s\", line %d, character %d:"
                     pos.Lexing.pos_fname pos.Lexing.pos_lnum
-                    (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)
-    in
+                    (pos.Lexing.pos_cnum - pos.Lexing.pos_bol) in
     print "" s;
     print "Zenon error: " msg
   
@@ -62,13 +61,10 @@ let adjust_pos lexbuf =
     else loop (i+1) nl last
   in
   let (nl, last) = loop 0 0 0 in
-  if nl > 0 then begin
-    lexbuf.lex_curr_p <- {
-      lexbuf.lex_curr_p with
+  if nl > 0 then
+    lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with
       pos_bol = Lexing.lexeme_start lexbuf + last + 1;
-      pos_lnum = lexbuf.lex_curr_p.pos_lnum + nl;
-    }
-  end
+      pos_lnum = lexbuf.lex_curr_p.pos_lnum + nl }
 
 }
 
@@ -80,19 +76,13 @@ let idchar = [ 'A' - 'Z' 'a' - 'z' '0' - '9' '_' ]
 let all_characters = [ '_' ]
 
 rule token = parse
-  | "#@" ([^ '\010']* as annot)
-                     { ANNOT annot }
-  | "#" [^ '\010']*
-                     { token lexbuf }
-    | "%@" ([^ '\010']* as annot)
-                     { ANNOT annot }
-  | "%" [^ '\010']*
-                     { token lexbuf }
+  | "#@" ([^ '\010']* as annot) { ANNOT annot }
+  | "#" [^ '\010']*  { token lexbuf }
+  | "%@" ([^ '\010']* as annot) { ANNOT annot }
+  | "%" [^ '\010']*  { token lexbuf }
   | '\010'           { adjust_pos lexbuf; token lexbuf }
-  | "/*" ([^ '*']* | '*'+ [^ '/' '*'])* '*'+ '/' {
-     adjust_pos lexbuf;
-     token lexbuf
-    }
+  | "/*" ([^ '*']* | '*'+ [^ '/' '*'])* '*'+ '/'
+                     { adjust_pos lexbuf; token lexbuf }
   | space +          { token lexbuf }
   | "("              { OPEN }
   | ")"              { CLOSE }
@@ -130,47 +120,38 @@ rule token = parse
   | "$true"          { TRUE }
   | "$false"         { FALSE }
   | "$tType"         { TTYPE }
-  | "\'"             { let buf = Buffer.create 20 in Buffer.add_char buf '\''; single_quoted buf lexbuf }
-  | "\""             { let buf = Buffer.create 20 in Buffer.add_char buf '\"'; double_quoted buf lexbuf }
+  | "\'"             { let buf = Buffer.create 20 in
+                       Buffer.add_char buf '\''; single_quoted buf lexbuf }
+  | "\""             { let buf = Buffer.create 20 in
+                       Buffer.add_char buf '\"'; double_quoted buf lexbuf }
   | upperid idchar * { UIDENT (Lexing.lexeme lexbuf) }
   | '$'? lowerid idchar * { LIDENT (Lexing.lexeme lexbuf) }
   | all_characters * { ANYCHAR (Lexing.lexeme lexbuf) }
-
-  | ['+' '-']? ['0' - '9']+
-        { INT (Lexing.lexeme lexbuf) }
-  | ['+' '-']? ['0' - '9']+ '/' ['0' - '9']+
-        { RAT (Lexing.lexeme lexbuf) }
-  | ['+' '-']? ['0' - '9']+ '.' ['0' - '9']+ (['E' 'e'] ['+' '-']? ['0' - '9']+)?
-        { REAL (Lexing.lexeme lexbuf) }
-
+  | ['+' '-']? ['0' - '9']+ { INT (Lexing.lexeme lexbuf) }
+  | ['+' '-']? ['0' - '9']+ '/' ['0' - '9']+ { RAT (Lexing.lexeme lexbuf) }
+  | ['+' '-']? ['0' - '9']+ '.' ['0' - '9']+ (['E' 'e'] ['+' '-']? ['0' - '9']+)? { REAL (Lexing.lexeme lexbuf) }
   | eof              { EOF }
-  | _                {
-      let msg = sprintf "bad character %C" (Lexing.lexeme_char lexbuf 0) in
-      raise (Error.Lex_error msg)
-    }
+  | _ { let msg = sprintf "bad character %C" (Lexing.lexeme_char lexbuf 0) in
+        raise (Error.Lex_error msg) }
 
 and single_quoted buf = parse
-  | '\\' [ '\\' '\'' ] {
-      Buffer.add_char buf (Lexing.lexeme_char lexbuf 1);
-      single_quoted buf lexbuf
-    }
-  | [' ' - '&' (* ' *) '(' - '[' (* \ *) ']' - '~' ]+ {
-      Buffer.add_string buf (Lexing.lexeme lexbuf);
-      single_quoted buf lexbuf
-    }
+  | '\\' [ '\\' '\'' ]
+    { Buffer.add_char buf (Lexing.lexeme_char lexbuf 1);
+      single_quoted buf lexbuf }
+  | [' ' - '&' (* ' *) '(' - '[' (* \ *) ']' - '~' ]+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      single_quoted buf lexbuf }
   | '\'' { Buffer.add_char buf '\''; LIDENT (Buffer.contents buf) }
   | '\\' { raise (Error.Lex_error "bad \\ escape in <single_quoted>") }
   | _ { raise (Error.Lex_error "bad character in <single_quoted>") }
 
 and double_quoted buf = parse
-  | '\\' [ '\\' '\"' ] {
-      Buffer.add_char buf (Lexing.lexeme_char lexbuf 1);
-      double_quoted buf lexbuf
-    }
-  | [' ' - '!' (* "" *) '#' - '[' (* \ *) ']' - '~' ]+ {
-      Buffer.add_string buf (Lexing.lexeme lexbuf);
-      double_quoted buf lexbuf
-    }
+  | '\\' [ '\\' '\"' ]
+    { Buffer.add_char buf (Lexing.lexeme_char lexbuf 1);
+      double_quoted buf lexbuf }
+  | [' ' - '!' (* "" *) '#' - '[' (* \ *) ']' - '~' ]+
+    { Buffer.add_string buf (Lexing.lexeme lexbuf);
+      double_quoted buf lexbuf }
   | '\"' { Buffer.add_char buf '\"'; STRING (Buffer.contents buf) }
   | '\\' { raise (Error.Lex_error "bad \\ escape in <distinct_object>") }
   | _ { raise (Error.Lex_error "bad character in <distinct_object>") }

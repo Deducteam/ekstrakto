@@ -5,7 +5,6 @@ open Expr
 open Phrase
 
 let ns pre s = (if !Globals.namespace_flag then pre else "") ^ s
-(* Renaming is now done during typechecking *)
 let ns_hyp s = ns "" s (* "H_" *)
 let ns_var s = ns "" s (* "v_" *)
 let ns_fun s = ns "" s (* "f_" *)
@@ -13,17 +12,14 @@ let ns_fun s = ns "" s (* "f_" *)
 let rec mk_quant q vs body =
   match vs with
   | [] -> body
-  | h::t ->
-     let body = mk_quant q t body in
-     (*Log.debug 4 "Quantifying over %a" Print.pp_expr h;*)
-     q (h, body)
+  | h::t -> q (h, mk_quant q t body)
 
 let quantify_formula f =
   let f1 = Expr.get_fv f in
   let vs = Misc.list_sort_unique String.compare f1 in
   let subs = List.map (fun n -> tvar_none n, tvar n type_iota) vs in
   let body = Expr.substitute subs f in
-  mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs ) body 
+  mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs) body 
 
 let cnf_to_formula l =
   let l1 = List.flatten (List.map Expr.get_fv l) in
@@ -34,7 +30,7 @@ let cnf_to_formula l =
     | [] -> assert false
     | a::l2 -> List.fold_left (fun x y -> eor (x,y)) a l2
   in
-  let body =  Expr.substitute subs body in
+  let body = Expr.substitute subs body in
   mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs) body
 
 %}
@@ -202,22 +198,18 @@ name_list:
   | LIDENT COMMA name_list         { $1 :: $3 }
   | LIDENT                         { [$1] }
 ;
-
 cnf_formula:
   | OPEN disjunction CLOSE         { $2 }
   | disjunction                    { $1 }
 ;
-
 disjunction:
   | atom                           { [$1] }
   | disjunction OR atom            { $3 :: $1 }
 ;
-
 optional:
-| /* mot vide */ { None }
+| /* empty */ { None }
 | COMMA source optional_info { Some ($2) }
 ;
-
 source:
 | dag_source { $1 }
 | internal_source { Phrase.Other $1 }
@@ -225,63 +217,51 @@ source:
 | UNKNOWN { Phrase.Other "unknown" }
 | LBRACKET source_list RBRACKET { Phrase.List $2 }
 ;
-
 source_list:
-| /* mot vide */ { [] }
+| /* empty */ { [] }
 | source { [$1] }
 | source COMMA source_list { $1 :: $3 }
 ;
-
 dag_source:
 | LIDENT { Phrase.Name $1 }
 | INFERENCE OPEN LIDENT COMMA useful_info COMMA LBRACKET source_list RBRACKET CLOSE { Phrase.Inference ($3, $5, $8) }
 ;
-
 internal_source:
 | INTRODUCED OPEN LIDENT optional_info CLOSE { $3 }
-
+;
 external_source:
 | file_source { $1 }
 | theory { $1 }
 | creator_source { $1 }
 ;
-
 file_source:
 | FILE OPEN LIDENT file_info CLOSE { $3 }
 ;
-
 file_info:
-| /*mot vide*/ { None }
+| /* empty */ { None }
 | COMMA LIDENT { Some ($2) }
 ;
-
 theory:
 | THEORY OPEN theory_name optional_info CLOSE { "Theory" }
 ;
-
 theory_name:
 | AC { None  }
 ;
-
 creator_source:
 | CREATOR OPEN LIDENT optional_info CLOSE { "Creator" }
 ;
-
 optional_info:
-| /*mot vide*/ { [] }
+| /* empty */ { [] }
 | COMMA useful_info { [$2] }
 ;
-
 useful_info:
 | LBRACKET info_items RBRACKET { $2 }
 ;
-
 info_items:
-| /*mot vide*/ { [] }
+| /* empty */ { [] }
 | info_item { [$1] }
 | info_item COMMA info_items { $1 :: $3 }
 ;
-
 info_item:
 | LIDENT { Phrase.Cte $1 }
 | LIDENT OPEN info_items CLOSE { Phrase.Fun ($1,$3) }

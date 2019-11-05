@@ -3,39 +3,37 @@ open Namespace
 open Expr
 open Phrase
 
+(* Print error message [msg] for current position of [lexbuf] and exit. *)
 let report_error lexbuf msg =
   let p = Lexing.lexeme_start_p lexbuf in
   Lextstp.Error.errpos p msg;
   exit 3
 
-let make_lexbuf stdin_opt f =
+(* Create a lexing buffer from a filename [fname]. If [stdin_opt] if
+   true and the file name is "-" then read from stdin. *)
+let make_lexbuf stdin_opt fname =
   let (name, chan, close) =
-    match f with
+    match fname with
     | "-" when stdin_opt -> ("", stdin, ignore)
-    | _ -> (f, open_in f, close_in)
+    | _ -> (fname, open_in fname, close_in)
   in
-  let lexbuf = Lexing.from_channel chan in
-  lexbuf.Lexing.lex_curr_p <- {
-     Lexing.pos_fname = name;
-     Lexing.pos_lnum = 1;
-     Lexing.pos_bol = 0;
-     Lexing.pos_cnum = 0;
-  };
+  let open Lexing in
+  let lexbuf = from_channel chan in
+  lexbuf.lex_curr_p <-
+    { pos_fname = name; pos_lnum = 1; pos_bol = 0; pos_cnum = 0 };
   (lexbuf, fun () -> close chan)
 
-let parse_file f =
+(* Parse the TSTP file named [fname] and return its contents. *)
+let parse_file fname =
+  let (lexbuf, closer) = make_lexbuf true fname in
   try
-    let (lexbuf, closer) = make_lexbuf true f in
-    try
-      let tpphrases = Parsetstp.file Lextstp.token lexbuf in
-      closer ();
-      tpphrases
-    with
-    | Parsing.Parse_error -> report_error lexbuf "syntax error."
-    | Lextstp.Error.Lex_error msg -> report_error lexbuf msg
-  with Sys_error (msg) -> Lextstp.Error.err msg; exit 4
-
-(* let x = Hashtbl.find name_formula_tbl "c_0_0" *)
+    let tpphrases = Parsetstp.file Lextstp.token lexbuf in
+    closer ();
+    tpphrases
+  with
+  | Parsing.Parse_error -> report_error lexbuf "syntax error."
+  | Lextstp.Error.Lex_error msg -> report_error lexbuf msg
+  | Sys_error msg -> (Lextstp.Error.err msg; exit 4)
 
 (* get only lines that contains inferences *)
 let rec get_inferences tstp_lines =

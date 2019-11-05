@@ -1,10 +1,9 @@
-(*  Copyright 2002 INRIA  *)
+(* Taken from git@github.com:Deducteam/zenon_modulo.git *)
 
 open Misc
 open Namespace
 open Printf
 
-(* From Globals *)
 module Globals = struct
   let num_expr = ref 0
   let namespace_flag = ref false
@@ -18,9 +17,7 @@ type expr =
   | Evar of string * private_info
   | Emeta of expr * private_info
   | Eapp of expr * expr list * private_info
-
   | Earrow of expr list * expr * private_info
-
   | Enot of expr * private_info
   | Eand of expr * expr * private_info
   | Eor of expr * expr * private_info
@@ -28,7 +25,6 @@ type expr =
   | Eequiv of expr * expr * private_info
   | Etrue
   | Efalse
-
   | Eall of expr * expr * private_info
   | Eex of expr * expr * private_info
   | Etau of expr * expr * private_info
@@ -155,6 +151,7 @@ exception Ill_typed_substitution of (expr * expr) list
 
 (************************)
 (* help for defined symbols in coq proofs *)
+
 let defs = ref ([] : (string * expr) list)
 let add_defs l = defs := l @ !defs
 let get_defs () = List.rev !defs
@@ -206,8 +203,9 @@ let mkpriv skel fv sz taus metas submetas typ = {
 
 (* Base types *)
 (* Variables version of the types should not be used (nor exported) as these
- * types should be considered constants*)
-let rec v_type_type = Evar("$tType", {
+   types should be considered constants *)
+let v_type_type =
+  Evar("$tType", {
     hash = Hashtbl.hash (0, ["$tType"]);
     skel_hash  = 0;
     free_vars = [];
@@ -216,10 +214,10 @@ let rec v_type_type = Evar("$tType", {
     metas = [];
     submetas = [];
     typ = None;
-})
+    })
 
 let type_type =
-    Eapp(v_type_type, [], {
+  Eapp(v_type_type, [], {
     hash = Hashtbl.hash (0, []);
     skel_hash  = 0;
     free_vars = [];
@@ -228,7 +226,7 @@ let type_type =
     metas = [];
     submetas = [];
     typ = None;
-})
+    })
 
 let v_type_prop_priv = mkpriv 0 ["$o"] 1 0 [] [] type_type
 let v_type_prop = Evar("Prop", v_type_prop_priv)
@@ -563,6 +561,20 @@ module HashedExpr = struct
     | _, _ -> false
 end
 
+(* Normal table version (faster but uses more memory) *)
+(*
+  module HE = Hashtbl.Make (HashedExpr)
+
+  let tbl = HE.create 999997
+
+  let he_merge k =
+    try HE.find tbl k
+    with Not_found ->
+      incr Globals.num_expr;
+      HE.add tbl k k;
+      k;;
+*)
+
 (* Weak table version *)
 
 module HE = Weak.Make (HashedExpr)
@@ -587,19 +599,6 @@ let print_stats oc =
   let (tbllen, entries, bucklen, least, median, largest) = HE.stats tbl in
   fprintf oc "tbl:%d ent:%d buc:%d sml:%d med:%d lrg:%d\n"
     tbllen entries bucklen least median largest
-
-(* Normal table version (faster but uses more memory) *)
-(*
-  module HE = Hashtbl.Make (HashedExpr)
-  let tbl = HE.create 999997
-
-  let he_merge k =
-    try HE.find tbl k
-    with Not_found ->
-      incr Globals.num_expr;
-      HE.add tbl k k;
-      k
-*)
 
 (* Expression constructors (except eapp, see substitutions) *)
 let tvar s t = he_merge (Evar (s, priv_var s t))
@@ -691,14 +690,10 @@ let rec xpreunify accu e1 e2 =
      end
   | _, _ -> raise Mismatch
 
-let preunify e1 e2 =
-  try xpreunify [] e1 e2
-  with Mismatch -> []
+let preunify e1 e2 = try xpreunify [] e1 e2 with Mismatch -> []
 
 let preunifiable e1 e2 =
-  try ignore (xpreunify [] e1 e2);
-      true
-  with Mismatch -> false
+  try ignore (xpreunify [] e1 e2); true with Mismatch -> false
 
 let preunify_list l1 l2 =
   try List.fold_left2 xpreunify [] l1 l2
@@ -720,9 +715,7 @@ let rec incr_sym n =
   | 'z' -> Bytes.set !cursym n 'a'; incr_sym (n+1)
   | c -> Bytes.set !cursym n (Char.chr (1 + Char.code c))
 
-let newname () =
-  incr_sym (String.length var_prefix);
-  Bytes.to_string !cursym
+let newname () = incr_sym (String.length var_prefix); Bytes.to_string !cursym
 
 let newtvar ty = tvar (newname ()) ty
 
@@ -730,7 +723,7 @@ let rec rm_binding v map =
   match map with
   | [] -> []
   | (w, _) :: t when w == v -> t
-  | h :: t -> h :: (rm_binding v t)
+  | h :: t -> h :: rm_binding v t
 
 let conflict v map =
   match v with
@@ -753,7 +746,7 @@ let rec find2 p l l' = match l, l' with
   | _ -> invalid_arg "find2"
 
 (* Substitution and application need to be defined recursively, since we need
- * substitution for application of polymorphic functions *)
+   substitution for application of polymorphic functions *)
 let rec priv_app s args =
   let comb_skel accu e = combine (get_skel e) accu in
   let skel = combine k_app (List.fold_left comb_skel (get_hash s) args) in
@@ -762,10 +755,6 @@ let rec priv_app s args =
   let taus = List.fold_left (fun a e -> max (get_taus e) a) 0 args in
   let metas = List.fold_left (fun a e -> union (get_metas e) a) [] args in
   let submetas = List.fold_left (fun a e -> union (get_submetas e) a) [] args in
-  (* Log.debug 15 "Typing %a ::: %a" print s print (get_type s);
-  List.iter
-    (fun x -> Log.debug 15 " |- %a ::: %a" print x print (get_unsafe_type x))
-    args; *)
   let typ = type_app (get_type s) args in
   mkpriv skel fv sz taus metas submetas typ
 
@@ -829,14 +818,10 @@ and substitute_unsafe map e =
        with Type_Mismatch _ ->
          eeq (substitute_unsafe map a) (substitute_unsafe map b)
      end
-  | Eapp (s, args, _) ->
-     eapp (s, List.map (substitute_unsafe map) args)
-  | Enot (f, _) ->
-     enot (substitute_unsafe map f)
-  | Eand (f, g, _) ->
-     eand (substitute_unsafe map f, substitute_unsafe map g)
-  | Eor (f, g, _) ->
-     eor (substitute_unsafe map f, substitute_unsafe map g)
+  | Eapp (s, args, _) -> eapp (s, List.map (substitute_unsafe map) args)
+  | Enot (f, _) -> enot (substitute_unsafe map f)
+  | Eand (f, g, _) -> eand (substitute_unsafe map f, substitute_unsafe map g)
+  | Eor (f, g, _) -> eor (substitute_unsafe map f, substitute_unsafe map g)
   | Eimply (f, g, _) ->
      eimply (substitute_unsafe map f, substitute_unsafe map g)
   | Eequiv (f, g, _) ->
@@ -951,10 +936,8 @@ let rec substitute_2nd_unsafe map e =
 
 and substitute_2nd_safe map e =
   if (List.for_all (fun (a, b) -> get_type a == get_type b) map)
-  then
-    substitute_2nd_unsafe map e
-  else
-    raise (Ill_typed_substitution map)
+  then substitute_2nd_unsafe map e
+  else raise (Ill_typed_substitution map)
 
 let substitute_2nd = substitute_2nd_unsafe
 
@@ -1010,11 +993,10 @@ let split_list n l = split_list_aux n l []
 let rec get_tvar_aux accu e =
   match e with
   | Evar _
-  | Emeta _ -> if get_type e == type_type && not (List.memq e accu)
-           then e :: accu
-           else accu
-  | Eapp (_, args, _) ->
-     List.fold_left get_tvar_aux accu args
+  | Emeta _ ->
+     if get_type e == type_type && not (List.memq e accu) then e :: accu
+     else accu
+  | Eapp (_, args, _) -> List.fold_left get_tvar_aux accu args
   | Enot (e1, _) -> get_tvar_aux accu e1
   | Etau _ -> accu
   | Earrow _
