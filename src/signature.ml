@@ -39,27 +39,26 @@ let get_type oc (b, n) =
 (* Generating signature file *)
 let generate_signature_file name ht =
   let name_dk = name ^ ".lp" in
-  let name = ((Sys.getcwd ()) ^ "/" ^ name ^ "/" ^ name_dk) in
+  let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
   printf "\t ==== Generating signature file ====\n";
   fprintf oc "require logic.zen as zen\n";
   Hashtbl.iter
-    (fun x n -> fprintf oc "symbol {|%s|} : %a\n" x get_type (fst n, snd n)) ht;
+    (fun x n -> fprintf oc "symbol {|%s|} : %a\n" x get_type n) ht;
   close_out oc;
   printf "%s \027[32m OK \027[0m\n\n%!" name
 
 (* generate a makefile to automate the proof generating and proof
    checking of all files *)
 let generate_makefile name =
-  let name_file = ((Sys.getcwd ()) ^ "/" ^ name ^ "/Makefile" ) in
-  let oc = open_out  name_file in
+  let fname = Sys.getcwd() ^ "/" ^ name ^ "/Makefile" in
+  let oc = open_out fname in
   printf "\t ==== Generating the Makefile ==== \n";
   fprintf oc "DIR?=/usr/local/lib/\n";
   fprintf oc "TIMELIMIT?=10s\n";
   fprintf oc "TPTP=$(wildcard lemmas/*.p)\n";
   fprintf oc "DKS=$(TPTP:.p=.lp)\n";
   fprintf oc "DKO=$(DKS:.lp=.lpo)\n";
-  (* fprintf oc "all: proof_%s.dko $(DKS)\n" name; *)
   fprintf oc "all: %s.lpo $(DKO) $(DKS)\n" name;
   fprintf oc "lemmas_lpo: %s.lpo $(DKO) $(DKS)\n" name;
   fprintf oc "proof: proof_%s.lpo \n" name;
@@ -78,5 +77,5 @@ let generate_makefile name =
   fprintf oc "proof_%s.lpo : proof_%s.lp %s.lpo $(DKO)\n" name name name;
   fprintf oc "\tlambdapi --gen-obj $< \n";
   fprintf oc "\n";
-  printf "%s\t \027[32m OK \027[0m\n\n%!" name_file;
+  printf "%s\t \027[32m OK \027[0m\n\n%!" fname;
   close_out oc
