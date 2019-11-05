@@ -1,26 +1,24 @@
 {
 
-open Lexing;;
-open Parsetstp;;
-open Printf;;
+open Lexing
+open Parsetstp
+open Printf
 
 module Error = struct
-  open Printf;;
 
-  let warnings_flag = ref true;;
-  let got_warning = ref false;;
-  let err_file = ref "";;
+  open Printf
 
-  let print_header = ref false;;
-  let header = ref "";;
+  let warnings_flag = ref true
+  let got_warning = ref false
+  let err_file = ref ""
 
-  let set_header msg =
-    print_header := true;
-    header := msg;
-  ;;
+  let print_header = ref false
+  let header = ref ""
 
-  let err_oc = ref stderr;;
-  let err_inited = ref false;;
+  let set_header msg = print_header := true; header := msg
+  
+  let err_oc = ref stderr
+  let err_inited = ref false
 
   let print kind msg =
     if not !err_inited then begin
@@ -29,17 +27,15 @@ module Error = struct
       err_inited := true;
     end;
     fprintf !err_oc "%s%s\n" kind msg;
-    flush !err_oc;
-  ;;
-
+    flush !err_oc
+  
   let warn msg =
     if !warnings_flag then begin
       print "Zenon warning: " msg;
       got_warning := true;
-    end;
-  ;;
-
-  let err msg = print "Zenon error: " msg;;
+    end
+  
+  let err msg = print "Zenon error: " msg
 
   let errpos pos msg =
     let s = sprintf "File \"%s\", line %d, character %d:"
@@ -47,17 +43,16 @@ module Error = struct
                     (pos.Lexing.pos_cnum - pos.Lexing.pos_bol)
     in
     print "" s;
-    print "Zenon error: " msg;
-  ;;
+    print "Zenon error: " msg
+  
+  exception Lex_error of string
+  exception Abort
 
-  exception Lex_error of string;;
-  exception Abort;;
 end
 
 let rec count_lf i s accu =
   if i >= String.length s then accu
   else count_lf (i+1) s (if s.[i] = '\n' then accu + 1 else accu)
-;;
 
 let adjust_pos lexbuf =
   let lx = Lexing.lexeme lexbuf in
@@ -73,8 +68,7 @@ let adjust_pos lexbuf =
       pos_bol = Lexing.lexeme_start lexbuf + last + 1;
       pos_lnum = lexbuf.lex_curr_p.pos_lnum + nl;
     }
-  end;
-;;
+  end
 
 }
 

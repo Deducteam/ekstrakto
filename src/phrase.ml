@@ -1,12 +1,11 @@
 (*  Copyright 2004 INRIA  *)
 
-open Expr;;
-open Hashtbl;;
+open Expr
+open Hashtbl
 
 type inductive_arg =
   | Param of string
   | Self
-;;
 
 type phrase =
   | Hyp of string * expr * int
@@ -15,7 +14,6 @@ type phrase =
   | Inductive of
      string * string list * (string * inductive_arg list) list * string
   | Rew of string * expr * int
-;;
 
 type zphrase =
   | Zhyp of string * expr * int
@@ -24,20 +22,17 @@ type zphrase =
   | Zinductive of
      string * string list * (string * inductive_arg list) list * string
   | Zinclude of string
-;;
 
-exception Bad_arg;;
+exception Bad_arg
 
-let name_formula_tbl = Hashtbl.create 127;;
+let name_formula_tbl = Hashtbl.create 127
 
 let extract_args l =
   List.map (function Evar _ as v -> v | _ -> raise Bad_arg) l
-;;
 
 let rec no_duplicates = function
   | [] | [ _ ] -> true
   | h1 :: h2 :: t -> h1 <> h2 && no_duplicates (h2 :: t)
-;;
 
 let check_args env args =
   try
@@ -46,14 +41,14 @@ let check_args env args =
     let sarg = List.sort compare arg in
     list_var_equal senv sarg && no_duplicates senv
   with Bad_arg -> false
-;;
 
 let rec check_body env s e =
   match e with
   | Evar (v, _) -> v <> s || List.mem e env
   | Emeta _ -> assert false
   | Earrow _ -> false
-  | Eapp (Evar(ss,_), args, _) -> ss <> s && List.for_all (check_body env s) args
+  | Eapp (Evar(ss,_), args, _) ->
+     ss <> s && List.for_all (check_body env s) args
   | Eapp(_) -> assert false
   | Enot (f, _) -> check_body env s f
   | Eand (f1, f2, _) | Eor (f1, f2, _) | Eimply (f1, f2, _) | Eequiv (f1, f2, _)
@@ -63,7 +58,6 @@ let rec check_body env s e =
   | Eall (v, f, _) | Eex (v, f, _)
   | Etau (v, f, _) | Elam (v, f, _)
     -> check_body (v::env) s f
-;;
 
 let rec is_def predef env e =
   match e with
@@ -80,12 +74,13 @@ let rec is_def predef env e =
      env = [] && check_body [] s body
   | Eapp (Evar("=",_), [body; Evar (s, _)], _) when not (List.mem s predef) ->
      env = [] && check_body [] s body
-  | Eapp (Evar("=",_), [Eapp (Evar(s,_), args, _); body], _) when not (List.mem s predef) ->
+  | Eapp (Evar("=",_), [Eapp (Evar(s,_), args, _); body], _)
+       when not (List.mem s predef) ->
      check_args env args && check_body [] s body
-  | Eapp (Evar("=",_), [body; Eapp (Evar(s,_), args, _)], _) when not (List.mem s predef) ->
+  | Eapp (Evar("=",_), [body; Eapp (Evar(s,_), args, _)], _)
+       when not (List.mem s predef) ->
      check_args env args && check_body [] s body
   | _ -> false
-;;
 
 let rec make_def predef orig env e =
   match e with
@@ -111,7 +106,6 @@ let rec make_def predef orig env e =
     when not (List.mem s predef) && check_args env args ->
       DefPseudo (orig, s, type_iota, extract_args args, body)
   | _ -> assert false
-;;
 
 let rec free_syms env accu e =
   match e with
@@ -130,12 +124,10 @@ let rec free_syms env accu e =
   | Etau (v, f, _)
   | Elam (v, f, _)
     -> free_syms (v::env) accu f
-;;
 
 let extract_dep = function
   | DefPseudo (_, s, _, args, body) -> (s, free_syms args [] body)
   | _ -> assert false
-;;
 
 let rec follow_deps l deps =
   match l with
@@ -146,12 +138,10 @@ let rec follow_deps l deps =
         hl @ follow_deps t deps
       with Not_found -> follow_deps t deps
       end
-;;
 
 let rec looping (s, l) deps =
   if l = [] then false else
   List.mem s l || looping (s, (follow_deps l deps)) deps
-;;
 
 let rec is_redef d ds =
   match d, ds with
@@ -162,19 +152,16 @@ let rec is_redef d ds =
       s1 = s2 || is_redef d t
   | DefReal _, _ -> assert false
   | DefRec _, _ -> assert false
-;;
 
 let rec remove_def accu sym defs =
   match defs with
   | [] -> assert false
   | DefPseudo (orig, s, _, _, _) :: t when s = sym -> (accu @ t, orig)
   | h::t -> remove_def (h::accu) sym t
-;;
 
 let get_symbol = function
   | DefPseudo (_, s, _, _, _) -> s
   | _ -> assert false
-;;
 
 let rec xseparate predef deps multi defs hyps l =
   match l with
@@ -196,19 +183,15 @@ let rec xseparate predef deps multi defs hyps l =
   | Sig _ :: t -> xseparate predef deps multi defs hyps t
   | Inductive _ :: t -> xseparate predef deps multi defs hyps t
   | Rew _ :: t -> xseparate predef deps multi defs hyps t
-;;
 
-let separate predef l = xseparate predef [] [] [] [] l;;
+let separate predef l = xseparate predef [] [] [] [] l
 
 let change_to_def predef body =
   if is_def predef [] body then begin
     match make_def predef (body, 0) [] body with
     | DefPseudo (_, s, ty, args, def) -> DefReal ("", s, ty, args, def, None)
     | _ -> assert false
-  end else begin
-    raise (Invalid_argument "change_to_def")
-  end
-;;
+  end else raise (Invalid_argument "change_to_def")
 
 type infoitem =
   | Cte of string
@@ -220,11 +203,9 @@ type tpannot =
   | Name of string
   | List of (tpannot list)
   | Other of string
-;;
 
 type tpphrase =
   | Include of string * string list option
   | Formula of string * string * expr * (string option)
   | Formula_annot of string * string * expr * (tpannot option)
   | Annotation of string
-;;

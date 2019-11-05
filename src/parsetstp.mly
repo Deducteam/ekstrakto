@@ -1,31 +1,29 @@
 %{
 
-open Printf;;
-open Expr;;
-open Phrase;;
+open Printf
+open Expr
+open Phrase
 
-let ns pre s = (if !Globals.namespace_flag then pre else "") ^ s;;
+let ns pre s = (if !Globals.namespace_flag then pre else "") ^ s
 (* Renaming is now done during typechecking *)
-let ns_hyp s = ns "" s;; (* "H_" *)
-let ns_var s = ns "" s;; (* "v_" *)
-let ns_fun s = ns "" s;; (* "f_" *)
+let ns_hyp s = ns "" s (* "H_" *)
+let ns_var s = ns "" s (* "v_" *)
+let ns_fun s = ns "" s (* "f_" *)
 
 let rec mk_quant q vs body =
   match vs with
   | [] -> body
   | h::t ->
-          let body = mk_quant q t body in
-           (*Log.debug 4 "Quantifying over %a" Print.pp_expr h;*)
-          q (h, body)
-;;
+     let body = mk_quant q t body in
+     (*Log.debug 4 "Quantifying over %a" Print.pp_expr h;*)
+     q (h, body)
 
 let quantify_formula f =
-	let f1 = Expr.get_fv f in
-	let vs = Misc.list_sort_unique String.compare f1 in
-	let subs = List.map (fun n -> tvar_none n, tvar n type_iota) vs in
-	
-	let body = Expr.substitute subs f in
-	mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs ) body;; 
+  let f1 = Expr.get_fv f in
+  let vs = Misc.list_sort_unique String.compare f1 in
+  let subs = List.map (fun n -> tvar_none n, tvar n type_iota) vs in
+  let body = Expr.substitute subs f in
+  mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs ) body 
 
 let cnf_to_formula l =
   let l1 = List.flatten (List.map Expr.get_fv l) in
@@ -38,7 +36,6 @@ let cnf_to_formula l =
   in
   let body =  Expr.substitute subs body in
   mk_quant eall (List.map (fun x -> (tvar x type_iota)) vs) body
-;;
 
 %}
 
