@@ -5,7 +5,11 @@ let rec print_requires oc proof_tree =
     List.iter (fun (name, e) -> Printf.fprintf oc "require lemmas.{|%s|} as {|%s|}\n" name name) proof_tree;;
 
 (* add {|VAR|} pattern for each variable to avoid unicode characters and check if it belongs to signature or not *)
-let print_var v signame = let v = "{|" ^ v ^ "|}" in if signame = "" then v else signame ^ "." ^ v;;
+let escape_name s =
+  let id_regex = Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$" in
+  if Str.string_match id_regex s 0 then s else "{|" ^ s ^ "|}"
+
+let print_var v signame = let v = escape_name v in if signame = "" then v else signame ^ "." ^ v;;
 
 (* print the formula (type) in lambdapi format *)
 let rec print_dk_type oc (ex, signame) =
