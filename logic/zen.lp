@@ -1,36 +1,55 @@
-require logic.cc as cc
+require open logic.cc
 require logic.dk_logic as dk_logic
 
+set declared "τ"
+set declared "ι"
+set declared "ϵ"
+set declared "⊤"
+set declared "⊥"
+set declared "¬"
+set declared "∀"
+set declared "∃"
 
-// Logic for Zenon Modulo
 
 symbol prop  : TYPE
-symbol _type  : TYPE
-symbol Proof : prop ⇒ TYPE
-symbol term  : _type ⇒ TYPE
-symbol arrow : _type ⇒ _type ⇒ _type
-symbol const iota  : _type
+symbol Type  : TYPE
+
+injective symbol ϵ : prop → TYPE
+symbol τ  : Type → TYPE
+symbol arrow : Type → Type → Type
+constant symbol ι : Type
 
 // Symbols
 
-symbol True  : prop
-symbol False : prop
+symbol ⊤ : prop
+symbol ⊥ : prop
 
-symbol not : prop ⇒ prop
-symbol {|and|} : prop ⇒ prop ⇒ prop
-symbol or  : prop ⇒ prop ⇒ prop
-symbol imp : prop ⇒ prop ⇒ prop
-symbol eqv : prop ⇒ prop ⇒ prop
+symbol ¬ : prop → prop
+symbol {|and|} : prop → prop → prop
+symbol or  : prop → prop → prop
+symbol imp : prop → prop → prop
+symbol eqv : prop → prop → prop
 
-symbol const select : ∀ (a : _type), term a
+set infix right 5 "⇒" ≔ imp
+set infix right 10 "∧" ≔ {|and|}
+set infix right 9 "∨" ≔ or
+set infix left 10 "⇔" ≔ eqv
 
-symbol forall : ∀ (a : _type), (term a ⇒ prop) ⇒ prop
-symbol exists : ∀ (a : _type), (term a ⇒ prop) ⇒ prop
+constant symbol select : Π (a : Type), τ a
 
-symbol foralltype : (_type ⇒ prop) ⇒ prop
-symbol existstype : (_type ⇒ prop) ⇒ prop
+symbol ∀ : Π (a : Type), (τ a → prop) → prop
+symbol ∃ : Π (a : Type), (τ a → prop) → prop
 
-symbol equal      : ∀ (a : _type), term a ⇒ term a ⇒ prop
+rule ϵ (∀ $a $p) ↪ Π (x : τ $a), ϵ ($p x)
+rule ϵ (∃ $a $p) ↪ Πq, (Π (x : τ $a), ϵ ($p x) → ϵ q) → ϵ q
+
+// symbol forall : Π (a : Type), (τ a → prop) → prop
+// symbol exists : Π (a : Type), (τ a → prop) → prop
+
+symbol foralltype : (Type → prop) → prop
+symbol existstype : (Type → prop) → prop
+
+symbol equal      : Π (a : Type), τ a → τ a → prop
 
 // Definition of Proofs of Symbols
 
@@ -42,536 +61,536 @@ symbol seq : TYPE
 
 // Rfalse
 
-symbol Rfalse : Proof False ⇒ seq
+symbol Rfalse : ϵ ⊥ → seq
 
 // Rnottrue
 
-symbol Rnottrue : Proof (not True) ⇒ seq
+symbol Rnottrue : ϵ (¬ ⊤) → seq
 
 // Raxiom
 
-symbol Raxiom : ∀ (p : prop), Proof p ⇒ Proof (not p) ⇒ seq
+symbol Raxiom : Π (p : prop), ϵ p → ϵ (¬ p) → seq
 
 // Rnoteq
 
-symbol Rnoteq : ∀ (a : _type) (t : term a), Proof (not (equal a t t)) ⇒ seq
+symbol Rnoteq : Π (a : Type) (t : τ a), ϵ (¬ (equal a t t)) → seq
 
 // Reqsym
 
-symbol Reqsym : ∀ (a : _type) (t : term a) (u : term a),
-             Proof (equal a t u) ⇒
-             Proof (not (equal a u t)) ⇒
+symbol Reqsym : Π (a : Type) (t : τ a) (u : τ a),
+             ϵ (equal a t u) →
+             ϵ (¬ (equal a u t)) →
              seq
 
 // Rcut
 
-symbol Rcut : ∀ (p : prop),
-           (Proof p ⇒ seq) ⇒
-           (Proof (not p) ⇒ seq) ⇒
+symbol Rcut : Π (p : prop),
+           (ϵ p → seq) →
+           (ϵ (¬ p) → seq) →
            seq
 
 // Rnotnot
 
-symbol Rnotnot : ∀ (p : prop),
-              (Proof p ⇒ seq) ⇒
-              Proof (not (not p)) ⇒
+symbol Rnot¬ : Π (p : prop),
+              (ϵ p → seq) →
+              ϵ (¬ (¬ p)) →
               seq
 
 // Rand
 
-symbol Rand : ∀ (p : prop)
+symbol Rand : Π (p : prop)
            (q : prop),
-           (Proof p ⇒ Proof q ⇒ seq) ⇒
-           Proof ({|and|} p q) ⇒
+           (ϵ p → ϵ q → seq) →
+           ϵ ({|and|} p q) →
            seq
 
 // Ror
 
-symbol Ror : ∀ (p : prop)
+symbol Ror : Π (p : prop)
           (q : prop),
-          (Proof p ⇒ seq) ⇒
-          (Proof q ⇒ seq) ⇒
-          Proof (or p q) ⇒
+          (ϵ p → seq) →
+          (ϵ q → seq) →
+          ϵ (or p q) →
           seq
 
 // Rimply
 
-symbol Rimply : ∀ (p : prop)
+symbol Rimply : Π (p : prop)
              (q : prop),
-             (Proof (not p) ⇒ seq) ⇒
-             (Proof q ⇒ seq) ⇒
-             Proof (imp p q) ⇒
+             (ϵ (¬ p) → seq) →
+             (ϵ q → seq) →
+             ϵ (imp p q) →
              seq
 
 // Requiv
 
-symbol Requiv : ∀ (p : prop)
+symbol Requiv : Π (p : prop)
              (q : prop),
-             (Proof (not p) ⇒ Proof (not q) ⇒ seq) ⇒
-             (Proof p ⇒ Proof q ⇒ seq) ⇒
-             Proof (eqv p q) ⇒
+             (ϵ (¬ p) → ϵ (¬ q) → seq) →
+             (ϵ p → ϵ q → seq) →
+             ϵ (eqv p q) →
              seq
 
 // Rnotand
 
-symbol Rnotand : ∀ (p : prop) (q : prop),
-              (Proof (not p) ⇒ seq) ⇒
-              (Proof (not q) ⇒ seq) ⇒
-              Proof (not ({|and|} p q)) ⇒
+symbol Rnotand : Π (p : prop) (q : prop),
+              (ϵ (¬ p) → seq) →
+              (ϵ (¬ q) → seq) →
+              ϵ (¬ ({|and|} p q)) →
               seq
 
 // Rnotor
 
-symbol Rnotor : ∀ (p : prop)
+symbol Rnotor : Π (p : prop)
                (q : prop),
-             (Proof (not p) ⇒ Proof (not q) ⇒ seq) ⇒
-             Proof (not (or p q)) ⇒
+             (ϵ (¬ p) → ϵ (¬ q) → seq) →
+             ϵ (¬ (or p q)) →
              seq
 
 // Rnotimply
 
-symbol Rnotimply : ∀ (p : prop)
+symbol Rnotimply : Π (p : prop)
                   (q : prop),
-                (Proof p ⇒ Proof (not q) ⇒ seq) ⇒
-                Proof (not (imp p q)) ⇒
+                (ϵ p → ϵ (¬ q) → seq) →
+                ϵ (¬ (imp p q)) →
                 seq
 
 // Rnotequiv
 
-symbol Rnotequiv :∀ (p : prop)
+symbol Rnotequiv :Π (p : prop)
                     (q : prop),
-                (Proof (not p) ⇒ Proof q ⇒ seq) ⇒
-                (Proof p ⇒ Proof (not q) ⇒ seq) ⇒
-                Proof (not (eqv p q)) ⇒
+                (ϵ (¬ p) → ϵ q → seq) →
+                (ϵ p → ϵ (¬ q) → seq) →
+                ϵ (¬ (eqv p q)) →
                 seq
 
 // Rex
 
-symbol Rex : ∀ (a : _type)
-               (p : (term a ⇒ prop)),
-          (∀ (t : term a), Proof (p t) ⇒ seq) ⇒
-          Proof (exists a p) ⇒
+symbol Rex : Π (a : Type)
+               (p : (τ a → prop)),
+          (Π (t : τ a), ϵ (p t) → seq) →
+          ϵ (∃ a p) →
           seq
 
 // Rall
 
-symbol Rall : ∀ (a : _type)
-                (p : (term a ⇒ prop))
-                (t : term a),
-           (Proof (p t) ⇒ seq) ⇒
-           Proof (forall a p) ⇒
+symbol Rall : Π (a : Type)
+                (p : (τ a → prop))
+                (t : τ a),
+           (ϵ (p t) → seq) →
+           ϵ (∀ a p) →
            seq
 
 // Rnotex
-symbol Rnotex : ∀ (a : _type)
-                  (p : (term a ⇒ prop))
-                  (t : term a),
-             (Proof (not (p t)) ⇒ seq) ⇒
-             Proof (not (exists a p)) ⇒
+symbol Rnotex : Π (a : Type)
+                  (p : (τ a → prop))
+                  (t : τ a),
+             (ϵ (¬ (p t)) → seq) →
+             ϵ (¬ (∃ a p)) →
              seq
 
 // Rnotall
 
-symbol Rnotall : ∀ (a : _type)
-                   (p : (term a ⇒ prop)),
-              (∀ (t : term a), Proof (not (p t)) ⇒ seq) ⇒
-              Proof (not (forall a p)) ⇒
+symbol Rnotall : Π (a : Type)
+                   (p : (τ a → prop)),
+              (Π (t : τ a), ϵ (¬ (p t)) → seq) →
+              ϵ (¬ (∀ a p)) →
               seq
 
 // Rextype
 
-symbol Rextype : ∀ (p : (_type ⇒ prop)),
-              ( ∀ (a : _type), Proof (p a) ⇒ seq) ⇒
-              Proof (existstype p) ⇒
+symbol Rextype : Π (p : (Type → prop)),
+              ( Π (a : Type), ϵ (p a) → seq) →
+              ϵ (existstype p) →
               seq
 
 // Ralltype
 
-symbol Ralltype : ∀ (p : (_type ⇒ prop))
-                    (a : _type),
-               (Proof (p a) ⇒ seq) ⇒
-               Proof (foralltype p) ⇒
+symbol Ralltype : Π (p : (Type → prop))
+                    (a : Type),
+               (ϵ (p a) → seq) →
+               ϵ (foralltype p) →
                seq
 
 // Rnotextype
 
-symbol Rnotextype : ∀ (p : (_type ⇒ prop))
-                      (a : _type),
-                 (Proof (not (p a)) ⇒ seq) ⇒
-                 Proof (not (existstype p)) ⇒
+symbol Rnotextype : Π (p : (Type → prop))
+                      (a : Type),
+                 (ϵ (¬ (p a)) → seq) →
+                 ϵ (¬ (existstype p)) →
                  seq
 
 // Rnotalltype
 
-symbol Rnotalltype :  ∀ (p : (_type ⇒ prop)),
-                   (∀ (a : _type), Proof (not (p a)) ⇒ seq) ⇒
-                   Proof (not (foralltype p)) ⇒
+symbol Rnotalltype :  Π (p : (Type → prop)),
+                   (Π (a : Type), ϵ (¬ (p a)) → seq) →
+                   ϵ (¬ (foralltype p)) →
                    seq
 
 // Rsubst
 
-symbol Rsubst : ∀ (a : _type)
-                  (p : (term a ⇒ prop))
-                  (t1 : term a)
-                  (t2 : term a),
-             (Proof (not (equal a t1 t2)) ⇒ seq) ⇒
-             (Proof (p t2) ⇒ seq) ⇒
-             Proof (p t1) ⇒
+symbol Rsubst : Π (a : Type)
+                  (p : (τ a → prop))
+                  (t1 : τ a)
+                  (t2 : τ a),
+             (ϵ (¬ (equal a t1 t2)) → seq) →
+             (ϵ (p t2) → seq) →
+             ϵ (p t1) →
              seq
 
-symbol Rconglr :∀ (a : _type)
-                  (p : (term a ⇒ prop))
-                  (t1 : term a)
-                  (t2 : term a),
-              (Proof (p t2) ⇒ seq) ⇒
-              Proof (p t1) ⇒
-              Proof (equal a t1 t2) ⇒
+symbol Rconglr :Π (a : Type)
+                  (p : (τ a → prop))
+                  (t1 : τ a)
+                  (t2 : τ a),
+              (ϵ (p t2) → seq) →
+              ϵ (p t1) →
+              ϵ (equal a t1 t2) →
               seq
 
-symbol Rcongrl : ∀ (a : _type)
-                  (p : (term a ⇒ prop))
-                  (t1 : term a)
-                  (t2 : term a),
-              (Proof (p t2) ⇒ seq) ⇒
-              Proof (p t1) ⇒
-              Proof (equal a t2 t1) ⇒
+symbol Rcongrl : Π (a : Type)
+                  (p : (τ a → prop))
+                  (t1 : τ a)
+                  (t2 : τ a),
+              (ϵ (p t2) → seq) →
+              ϵ (p t1) →
+              ϵ (equal a t2 t1) →
               seq
 
 // Proofs of these rules in the logic of Focalide
 
-rule _type  → cc.uT
-rule term  → cc.eT
-rule arrow → cc.Arrow
-rule prop  → dk_logic.Prop
-rule Proof → dk_logic.eP
+rule Type  ↪ uT
+rule τ  ↪ eT
+rule arrow ↪ Arrow
+rule prop  ↪ dk_logic.Prop
+rule ϵ ↪ dk_logic.eP
 
-rule True       → dk_logic.True
-rule False      → dk_logic.False
-rule not        → dk_logic.not
-rule{|and|}       → dk_logic.{|and|}
-rule or         → dk_logic.or
-rule imp        → dk_logic.imp
-rule eqv        → dk_logic.eqv
-rule forall     → dk_logic.forall
-rule exists     → dk_logic.exists
-rule foralltype → dk_logic.forall_type
-rule existstype → dk_logic.exists_type
-rule equal      → dk_logic.equal
+rule ⊤       ↪ dk_logic.True
+rule ⊥      ↪ dk_logic.False
+rule ¬        ↪ dk_logic.not
+rule {|and|}    ↪ dk_logic.{|and|}
+rule or         ↪ dk_logic.or
+rule imp        ↪ dk_logic.imp
+rule eqv        ↪ dk_logic.eqv
+rule ∀          ↪ dk_logic.forall
+rule ∃          ↪ dk_logic.exists
+rule foralltype ↪ dk_logic.forall_type
+rule existstype ↪ dk_logic.exists_type
+rule equal      ↪ dk_logic.equal
 
-rule seq → Proof False
+rule seq ↪ ϵ ⊥
 
 // Law of eXcluded Middle
 
-symbol const xmid       : ∀ (p : prop) (z : prop),
-	     (Proof p ⇒ Proof z) ⇒
-	     (Proof (not p) ⇒ Proof z) ⇒
-	     Proof z
+constant symbol xmid       : Π (p : prop) (z : prop),
+	     (ϵ p → ϵ z) →
+	     (ϵ (¬ p) → ϵ z) →
+	     ϵ z
 
-definition nnpp (p : prop) : Proof (not (not p)) ⇒ Proof p ≔
-    λ (H1 : Proof (not (not p))),
+definition nnpp (p : prop) : ϵ (¬ (¬ p)) → ϵ p ≔
+    λ (H1 : ϵ (¬ (¬ p))),
       xmid p p
-	    (λ (H2 : Proof p),
+	    (λ (H2 : ϵ p),
         H2)
-	    (λ (H3 : Proof (not p)),
+	    (λ (H3 : ϵ (¬ p)),
 	        H1 H3 p)
 
 // usefull lemmas to prove rules
 
-definition true_intro : Proof True
-             ≔ λ (p : prop) (x : Proof p), x
+definition true_intro : ϵ ⊤
+             ≔ λ (p : prop) (x : ϵ p), x
 
 definition lemme_contraposition (p : prop)
                       (q : prop)
-: (Proof (imp p q) ⇒
-   Proof (imp (not q) (not p)))
+: (ϵ (imp p q) →
+   ϵ (imp (¬ q) (¬ p)))
 ≔
-  λ (H1 : Proof (imp p q))
-  (H2 : Proof (not q))
-     (H3 : Proof p),
+  λ (H1 : ϵ (imp p q))
+  (H2 : ϵ (¬ q))
+     (H3 : ϵ p),
 	H2 (H1 H3)
 
 definition lemme_equiv_1 (p : prop)
 	       (q : prop)
-	       (H5 : Proof q ⇒ Proof p)
-	       (H2 : Proof p ⇒ Proof (not q))
-	       (HQ : Proof q)
-: Proof (not q)
+	       (H5 : ϵ q → ϵ p)
+	       (H2 : ϵ p → ϵ (¬ q))
+	       (HQ : ϵ q)
+: ϵ (¬ q)
 ≔
   H2 (H5 HQ)
 
 definition lemme_equiv_2 (p : prop)
  	       (q : prop)
-	       (H5 : Proof q ⇒ Proof p)
-	       (H2 : Proof p ⇒ Proof (not q))
-: Proof (not q)
+	       (H5 : ϵ q → ϵ p)
+	       (H2 : ϵ p → ϵ (¬ q))
+: ϵ (¬ q)
 ≔
-  λ (HQ : Proof q), lemme_equiv_1 p q H5 H2 HQ HQ
+  λ (HQ : ϵ q), lemme_equiv_1 p q H5 H2 HQ HQ
 
 definition lemme_equiv_3 (p : prop)
 	       (q : prop)
-	       (H5 : Proof q ⇒ Proof p)
-	       (H2 : Proof p ⇒ Proof (not q))
-	       (H4 : Proof p ⇒ Proof q)
-: Proof (not p)
+	       (H5 : ϵ q → ϵ p)
+	       (H2 : ϵ p → ϵ (¬ q))
+	       (H4 : ϵ p → ϵ q)
+: ϵ (¬ p)
 ≔
   lemme_contraposition p q H4 (lemme_equiv_2 p q H5 H2)
 
 definition lemme_equiv_4 (p : prop)
 	       (q : prop)
-	       (H5 : Proof q ⇒ Proof p)
-	       (H2 : Proof p ⇒ Proof (not q))
-	       (H4 : Proof p ⇒ Proof q)
-	       (H1 : Proof (not p) ⇒ Proof (not (not q)))
-: Proof (not (not q))
+	       (H5 : ϵ q → ϵ p)
+	       (H2 : ϵ p → ϵ (¬ q))
+	       (H4 : ϵ p → ϵ q)
+	       (H1 : ϵ (¬ p) → ϵ (¬ (¬ q)))
+: ϵ (¬ (¬ q))
 ≔
   H1 (lemme_equiv_3 p q H5 H2 H4)
 
 definition lemme_notor_1 (p : prop)
 	       (q : prop)
-: Proof p ⇒ Proof (or p q)
+: ϵ p → ϵ (or p q)
 ≔
-  λ (H1 : Proof p)
+  λ (H1 : ϵ p)
     (z : prop)
-    (H2 : (Proof p ⇒ Proof z))
-	  (H3 : (Proof q ⇒ Proof z)),
+    (H2 : (ϵ p → ϵ z))
+	  (H3 : (ϵ q → ϵ z)),
 	   H2 H1
 
 definition lemme_notor_2 (p : prop)
 	       (q : prop)
-: Proof q ⇒ Proof (or p q)
+: ϵ q → ϵ (or p q)
 ≔
-  λ (H1 : Proof q)
+  λ (H1 : ϵ q)
     (z : prop)
-    (H2 : (Proof p ⇒ Proof z))
-	  (H3 : (Proof q ⇒ Proof z)),
+    (H2 : (ϵ p → ϵ z))
+	  (H3 : (ϵ q → ϵ z)),
 	   H3 H1
 
 definition lemme_notor_3 (p : prop)
 	       (q : prop)
-	       (H2 : Proof (not (or p q)))
-: Proof (not p)
+	       (H2 : ϵ (¬ (or p q)))
+: ϵ (¬ p)
 ≔
   lemme_contraposition p (or p q) (lemme_notor_1 p q) H2
 
 definition lemme_notor_4 (p : prop)
 	       (q : prop)
-	       (H2 : Proof (not (or p q)))
-: Proof (not q)
+	       (H2 : ϵ (¬ (or p q)))
+: ϵ (¬ q)
 ≔
   lemme_contraposition q (or p q) (lemme_notor_2 p q) H2
 
 definition lemme_notimply_1 (p : prop)
 	          (q : prop)
-	          (H2 : Proof (not (imp p q)))
-: Proof (not q)
+	          (H2 : ϵ (¬ (imp p q)))
+: ϵ (¬ q)
 ≔
-  λ (H3 : Proof q),
-  H2 (λ (H4 : Proof p), H3)
+  λ (H3 : ϵ q),
+  H2 (λ (H4 : ϵ p), H3)
 
 definition lemme_notimply_2 (p : prop)
 	          (q : prop)
-	          (H1 : Proof p ⇒ Proof (not (not q)))
-	          (H2 : Proof (not (imp p q)))
-: Proof (not p)
+	          (H1 : ϵ p → ϵ (¬ (¬ q)))
+	          (H2 : ϵ (¬ (imp p q)))
+: ϵ (¬ p)
 ≔
-  λ (H3 : Proof p),
+  λ (H3 : ϵ p),
     (H1 H3) (lemme_notimply_1 p q H2)
 
 definition lemme_notimply_3 (p : prop)
 	          (q : prop)
-	          (H3 : Proof (not p))
-: Proof (imp p q)
+	          (H3 : ϵ (¬ p))
+: ϵ (imp p q)
 ≔
-  λ (H4 : Proof p), H3 H4 q
+  λ (H4 : ϵ p), H3 H4 q
 
 definition lemme_notequiv_1 (p : prop)
                   (q : prop)
-                  (H2 : Proof p ⇒ Proof (not (not q)))
-                  (H3 : Proof (not (eqv p q)))
-: Proof (not p)
+                  (H2 : ϵ p → ϵ (¬ (¬ q)))
+                  (H3 : ϵ (¬ (eqv p q)))
+: ϵ (¬ p)
 ≔
-  λ (HP : Proof p),
-    H2 HP (λ (HQ : Proof q),
+  λ (HP : ϵ p),
+    H2 HP (λ (HQ : ϵ q),
               H3 (λ (z : prop)
-                    (H4 : (Proof (imp p q) ⇒
-                            Proof (imp q p) ⇒
-                            Proof z)),
-                      H4 (λ (__ : Proof p), HQ) (λ (__ : Proof q), HP)))
+                    (H4 : (ϵ (imp p q) →
+                            ϵ (imp q p) →
+                            ϵ z)),
+                      H4 (λ (__ : ϵ p), HQ) (λ (__ : ϵ q), HP)))
 
-// Proofs of LLProof Rules
+// Proofs of LLϵ Rules
 
-rule Rfalse → λ (x : Proof False), x
+rule Rfalse ↪ λ (x : ϵ ⊥), x
 
-rule Rnottrue → λ (H : Proof (not True)), H true_intro
+rule Rnottrue ↪ λ (H : ϵ (¬ ⊤)), H true_intro
 
-rule Raxiom &p → λ (H : Proof &p) (CH : Proof (not &p)), CH H
+rule Raxiom $p ↪ λ (H : ϵ $p) (CH : ϵ (¬ $p)), CH H
 
-rule Rnoteq &a &t →
-  λ (H1 : Proof (not (equal &a &t &t))),
-     H1 (λ (z : (term &a ⇒ prop)),
-	     (λ (H2 : Proof (z &t)),
+rule Rnoteq $a $t ↪
+  λ (H1 : ϵ (¬ (equal $a $t $t))),
+     H1 (λ (z : (τ $a → prop)),
+	     (λ (H2 : ϵ (z $t)),
 	          H2))
 
-rule Reqsym &a &t &u →
-  λ (H1 : Proof (equal &a &t &u))
-    (H2 : Proof (not (equal &a &u &t))),
-     H2 (λ (z : (term &a ⇒ prop))
-	         (H3 : Proof (z &u)),
-	            H1 (λ (x : term &a),
-		            (imp (z x) (z &t)))
-		     (λ (H4 : Proof (z &t)),
+rule Reqsym $a $t $u ↪
+  λ (H1 : ϵ (equal $a $t $u))
+    (H2 : ϵ (¬ (equal $a $u $t))),
+     H2 (λ (z : (τ $a → prop))
+	         (H3 : ϵ (z $u)),
+	            H1 (λ (x : τ $a),
+		            (imp (z x) (z $t)))
+		     (λ (H4 : ϵ (z $t)),
 		      H4)
 		     H3)
 
-rule Rcut &p →
-  λ (H1 : (Proof &p ⇒ Proof False))
-    (H2 : (Proof (not &p) ⇒ Proof False)),
+rule Rcut $p ↪
+  λ (H1 : (ϵ $p → ϵ ⊥))
+    (H2 : (ϵ (¬ $p) → ϵ ⊥)),
      H2 H1
 
-rule Rnotnot &p →
-  λ (H1 : (Proof &p ⇒ Proof False))
-    (H2 : Proof (not (not &p))),
+rule Rnot¬ $p ↪
+  λ (H1 : (ϵ $p → ϵ ⊥))
+    (H2 : ϵ (¬ (¬ $p))),
      H2 H1
 
-rule Rand &p &q →
-  λ (H1 : (Proof &p ⇒ Proof &q ⇒ Proof False))
-    (H2 : Proof ({|and|} &p &q)),
-     H2 False H1
+rule Rand $p $q ↪
+  λ (H1 : (ϵ $p → ϵ $q → ϵ ⊥))
+    (H2 : ϵ ({|and|} $p $q)),
+     H2 ⊥ H1
 
-rule Ror &p &q →
-  λ (H1 : (Proof &p ⇒ Proof False))
-    (H2 : (Proof &q ⇒ Proof False))
-    (H3 : Proof (or &p &q)),
-	   H3 False H1 H2
+rule Ror $p $q ↪
+  λ (H1 : (ϵ $p → ϵ ⊥))
+    (H2 : (ϵ $q → ϵ ⊥))
+    (H3 : ϵ (or $p $q)),
+	   H3 ⊥ H1 H2
 
-rule Rimply &p &q →
-  λ (H1 : (Proof (not &p) ⇒ Proof False))
-    (H2 : (Proof &q ⇒ Proof False))
-    (H3 : Proof (imp &p &q)),
-     H1 (lemme_contraposition &p &q H3 H2)
+rule Rimply $p $q ↪
+  λ (H1 : (ϵ (¬ $p) → ϵ ⊥))
+    (H2 : (ϵ $q → ϵ ⊥))
+    (H3 : ϵ (imp $p $q)),
+     H1 (lemme_contraposition $p $q H3 H2)
 
-rule Requiv &p &q →
-  λ (H1 : (Proof (not &p) ⇒ Proof (not &q) ⇒ Proof False))
-    (H2 : (Proof &p ⇒ Proof &q ⇒ Proof False))
-    (H3 : Proof (eqv &p &q)),
-	   H3 False
-             (λ (H4 : (Proof &p ⇒ Proof &q))
-	              (H5 : (Proof &q ⇒ Proof &p)),
-		  lemme_equiv_4 &p &q H5 H2 H4 H1 (lemme_equiv_2 &p &q H5 H2))
+rule Requiv $p $q ↪
+  λ (H1 : (ϵ (¬ $p) → ϵ (¬ $q) → ϵ ⊥))
+    (H2 : (ϵ $p → ϵ $q → ϵ ⊥))
+    (H3 : ϵ (eqv $p $q)),
+	   H3 ⊥
+             (λ (H4 : (ϵ $p → ϵ $q))
+	              (H5 : (ϵ $q → ϵ $p)),
+		  lemme_equiv_4 $p $q H5 H2 H4 H1 (lemme_equiv_2 $p $q H5 H2))
 
-rule Rnotand &p &q →
-  λ (H1 : (Proof (not &p) ⇒ Proof False))
-    (H2 : (Proof (not &q) ⇒ Proof False))
-    (H3 : Proof (not ({|and|} &p &q))),
-	  H1 (λ (H5 : Proof &p),
-               H2 (λ (H6 : Proof &q),
+rule Rnotand $p $q ↪
+  λ (H1 : (ϵ (¬ $p) → ϵ ⊥))
+    (H2 : (ϵ (¬ $q) → ϵ ⊥))
+    (H3 : ϵ (¬ ({|and|} $p $q))),
+	  H1 (λ (H5 : ϵ $p),
+               H2 (λ (H6 : ϵ $q),
                    H3 (λ (z : prop),
-                       (λ (H4 : (Proof &p ⇒ Proof &q ⇒ Proof z)),
+                       (λ (H4 : (ϵ $p → ϵ $q → ϵ z)),
                         H4 H5 H6))))
 
-rule Rnotor &p &q →
-  λ (H1 : (Proof (not &p) ⇒ Proof (not &q) ⇒ Proof False))
-    (H2 : Proof (not (or &p &q))),
-     H1 (lemme_notor_3 &p &q H2) (lemme_notor_4 &p &q H2)
+rule Rnotor $p $q ↪
+  λ (H1 : (ϵ (¬ $p) → ϵ (¬ $q) → ϵ ⊥))
+    (H2 : ϵ (¬ (or $p $q))),
+     H1 (lemme_notor_3 $p $q H2) (lemme_notor_4 $p $q H2)
 
-// [p : prop, q : prop] Rnotimply p q →
-//   H1 : (Proof p ⇒ Proof (not q) ⇒ Proof False)
-//   => H2 : Proof (not (imp p q))
+// [p : prop, q : prop] Rnotimply p q ↪
+//   H1 : (ϵ p → ϵ (¬ q) → ϵ ⊥)
+//   => H2 : ϵ (¬ (imp p q))
 //      => H2 (lemme_notimply_3 p q (lemme_notimply_2 p q H1 H2)).
 
-// def Rnotimplytest : p : prop ⇒
-//                 q : prop ⇒
-//                 (Proof p ⇒ Proof (not q) ⇒ seq) ⇒
-//                 Proof (not (imp p q)) ⇒
+// def Rnotimplytest : p : prop →
+//                 q : prop →
+//                 (ϵ p → ϵ (¬ q) → seq) →
+//                 ϵ (¬ (imp p q)) →
 //                 seq.
 
-// def Rnotimplytesttwo : p : prop ⇒
-//                 q : prop ⇒
-//                 (Proof p ⇒ Proof (not q) ⇒ seq) ⇒
-//                 Proof (not (imp p q)) ⇒
+// def Rnotimplytesttwo : p : prop →
+//                 q : prop →
+//                 (ϵ p → ϵ (¬ q) → seq) →
+//                 ϵ (¬ (imp p q)) →
 //                 seq.
 
-// [p : prop, q : prop] Rnotimplytest p q →
-//   H1 : (Proof p ⇒ Proof (not q) ⇒ Proof False)
-//   => H2 : Proof (not (imp p q))
+// [p : prop, q : prop] Rnotimplytest p q ↪
+//   H1 : (ϵ p → ϵ (¬ q) → ϵ ⊥)
+//   => H2 : ϵ (¬ (imp p q))
 //      => H2 (lemme_notimply_3 p q
-//                             (H4 : Proof p
+//                             (H4 : ϵ p
 //                              => (H1 H4)
-//                                 (H5 : Proof q
-//                                   => H2 (H6 : Proof p
+//                                 (H5 : ϵ q
+//                                   => H2 (H6 : ϵ p
 // 	                                  => H5))) ).
 
-rule Rnotimply &p &q →
-  λ (H1 : (Proof &p ⇒ Proof (not &q) ⇒ Proof False))
-    (H2 : Proof (not (imp &p &q))),
-     H2 (λ (H3 : Proof &p),
-            (H1 H3) (λ (H4 : Proof &q),
-                        H2 (λ (H5 : Proof &p),
-                               H4)) &q)
+rule Rnotimply $p $q ↪
+  λ (H1 : (ϵ $p → ϵ (¬ $q) → ϵ ⊥))
+    (H2 : ϵ (¬ (imp $p $q))),
+     H2 (λ (H3 : ϵ $p),
+            (H1 H3) (λ (H4 : ϵ $q),
+                        H2 (λ (H5 : ϵ $p),
+                               H4)) $q)
 
 
-rule Rnotequiv &p &q →
-  λ (H1 : (Proof (not &p) ⇒ Proof (not &q)))
-    (H2 : (Proof &p ⇒ Proof (not (not &q))))
-    (H3 : Proof (not (eqv &p &q))),
-    (λ (HNP : Proof (not &p)),
+rule Rnotequiv $p $q ↪
+  λ (H1 : (ϵ (¬ $p) → ϵ (¬ $q)))
+    (H2 : (ϵ $p → ϵ (¬ (¬ $q))))
+    (H3 : ϵ (¬ (eqv $p $q))),
+    (λ (HNP : ϵ (¬ $p)),
             H3 (λ (z : prop)
-                  (H4 : (Proof (imp &p &q) ⇒ Proof (imp &q &p) ⇒ Proof z)),
-                      H4 (λ (HP : Proof &p), HNP HP &q)
-                            (λ (HQ : Proof &q), H1 HNP HQ &p)))
-           (lemme_notequiv_1 &p &q H2 H3)
+                  (H4 : (ϵ (imp $p $q) → ϵ (imp $q $p) → ϵ z)),
+                      H4 (λ (HP : ϵ $p), HNP HP $q)
+                            (λ (HQ : ϵ $q), H1 HNP HQ $p)))
+           (lemme_notequiv_1 $p $q H2 H3)
 
-rule Rex &a &p →
-  λ (H1 : (∀ (t : term &a), Proof (&p t) ⇒ Proof False))
-    (H2 : Proof (exists &a &p)),
-     H2 False H1
+rule Rex $a $p ↪
+  λ (H1 : (Π (t : τ $a), ϵ ($p t) → ϵ ⊥))
+    (H2 : ϵ (∃ $a $p)),
+     H2 ⊥ H1
 
-rule Rall &a &p &t →
-  λ (H1 : (Proof (&p &t) ⇒ Proof False))
-    (H2 : Proof (forall &a &p)),
-     H1 (H2 &t)
+rule Rall $a $p $t ↪
+  λ (H1 : (ϵ ($p $t) → ϵ ⊥))
+    (H2 : ϵ (∀ $a $p)),
+     H1 (H2 $t)
 
-rule Rnotex &a &p &t →
-  λ (H1 : (Proof (not (&p &t)) ⇒ Proof False))
-    (H2 : Proof (not (exists &a &p))),
-     H1 (λ (H4 : Proof (&p &t)),
+rule Rnotex $a $p $t ↪
+  λ (H1 : (ϵ (¬ ($p $t)) → ϵ ⊥))
+    (H2 : ϵ (¬ (∃ $a $p))),
+     H1 (λ (H4 : ϵ ($p $t)),
             H2 (λ (z : prop)
-		              (H3 : (∀ (x : term &a), Proof (&p x) ⇒ Proof z)),
-		      H3 &t H4))
+		              (H3 : (Π (x : τ $a), ϵ ($p x) → ϵ z)),
+		      H3 $t H4))
 
-rule Rnotall &a &p →
-  λ (H1 : (∀(t : term &a), Proof (not (&p t)) ⇒ Proof False))
-    (H2 : Proof (not (forall &a &p))),
-     H2 (λ (t : term &a),
-	       nnpp (&p t) (H1 t))
+rule Rnotall $a $p ↪
+  λ (H1 : (Π(t : τ $a), ϵ (¬ ($p t)) → ϵ ⊥))
+    (H2 : ϵ (¬ (∀ $a $p))),
+     H2 (λ (t : τ $a),
+	       nnpp ($p t) (H1 t))
 
-rule Rextype &p →
-  λ (H1 : (∀ (a : _type), Proof (&p a) ⇒ Proof False))
-    (H2 : Proof (existstype &p)),
-     H2 False H1
+rule Rextype $p ↪
+  λ (H1 : (Π (a : Type), ϵ ($p a) → ϵ ⊥))
+    (H2 : ϵ (existstype $p)),
+     H2 ⊥ H1
 
-rule Ralltype &p &a →
-  λ (H1 : (Proof (&p &a) ⇒ Proof False))
-    (H2 : Proof (foralltype &p)),
-     H1 (H2 &a)
+rule Ralltype $p $a ↪
+  λ (H1 : (ϵ ($p $a) → ϵ ⊥))
+    (H2 : ϵ (foralltype $p)),
+     H1 (H2 $a)
 
-rule Rnotextype &p &a →
-  λ (H1 : (Proof (not (&p &a)) ⇒ Proof False))
-    (H2 : Proof (not (existstype &p))),
-     H1 (λ (H4 : Proof (&p &a)),
+rule Rnotextype $p $a ↪
+  λ (H1 : (ϵ (¬ ($p $a)) → ϵ ⊥))
+    (H2 : ϵ (¬ (existstype $p))),
+     H1 (λ (H4 : ϵ ($p $a)),
             (H2 (λ (z : prop)
-		            (H3 : (∀ (b : _type), Proof (&p b) ⇒ Proof z)),
-		             H3 &a H4)))
+		            (H3 : (Π (b : Type), ϵ ($p b) → ϵ z)),
+		             H3 $a H4)))
 
-rule Rnotalltype &p →
-  λ (H1 : (∀ (a : _type), Proof (not (&p a)) ⇒ Proof False))
-    (H2 : Proof (not (foralltype &p))),
-    H2 (λ (a : _type),
-	       nnpp (&p a) (H1 a))
+rule Rnotalltype $p ↪
+  λ (H1 : (Π (a : Type), ϵ (¬ ($p a)) → ϵ ⊥))
+    (H2 : ϵ (¬ (foralltype $p))),
+    H2 (λ (a : Type),
+	       nnpp ($p a) (H1 a))
 
-rule Rsubst &a &p &t1 &t2 →
-  λ (H1 : (Proof (not (equal &a &t1 &t2)) ⇒ Proof False))
-    (H2 : (Proof (&p &t2) ⇒ Proof False))
-    (H3 : Proof (&p &t1)),
-	   H1 (λ (H4 : Proof (equal &a &t1 &t2)),
-            H2 (H4 &p H3))
+rule Rsubst $a $p $t1 $t2 ↪
+  λ (H1 : (ϵ (¬ (equal $a $t1 $t2)) → ϵ ⊥))
+    (H2 : (ϵ ($p $t2) → ϵ ⊥))
+    (H3 : ϵ ($p $t1)),
+	   H1 (λ (H4 : ϵ (equal $a $t1 $t2)),
+            H2 (H4 $p H3))
