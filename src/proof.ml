@@ -8,15 +8,23 @@ let rec print_requires oc proof_tree m_name =
       fprintf oc "require %s.lemmas.%s as %s\n" m_name name name)
     proof_tree
 
+<<<<<<< HEAD
+=======
+(* add {|VAR|} pattern for each variable to avoid unicode characters and check if it belongs to signature or not *)
+>>>>>>> 5a9557e19823b5a989d3f54f5c163bb66f416ada
 let escape_name s =
   let id_regex = Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$" in
   if Str.string_match id_regex s 0 then s else "{|" ^ s ^ "|}"
 
+<<<<<<< HEAD
 (* add {|VAR|} pattern for each variable to avoid unicode characters
    and check if it belongs to signature or not *)
 let print_var v signame =
   let escaped_v = escape_name v in
   if signame = "" then escaped_v else signame ^ "." ^ escaped_v
+=======
+let print_var v signame = let v = escape_name v in if signame = "" then v else signame ^ "." ^ v;;
+>>>>>>> 5a9557e19823b5a989d3f54f5c163bb66f416ada
 
 (* print the formula (type) in lambdapi format *)
 let rec print_dk_type oc (ex, signame) =
