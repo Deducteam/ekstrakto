@@ -8,23 +8,16 @@ let rec print_requires oc proof_tree m_name =
       fprintf oc "require %s.lemmas.%s as %s\n" m_name name name)
     proof_tree
 
-<<<<<<< HEAD
-=======
-(* add {|VAR|} pattern for each variable to avoid unicode characters and check if it belongs to signature or not *)
->>>>>>> 5a9557e19823b5a989d3f54f5c163bb66f416ada
 let escape_name s =
   let id_regex = Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$" in
   if Str.string_match id_regex s 0 then s else "{|" ^ s ^ "|}"
 
-<<<<<<< HEAD
 (* add {|VAR|} pattern for each variable to avoid unicode characters
    and check if it belongs to signature or not *)
 let print_var v signame =
   let escaped_v = escape_name v in
-  if signame = "" then escaped_v else signame ^ "." ^ escaped_v
-=======
-let print_var v signame = let v = escape_name v in if signame = "" then v else signame ^ "." ^ v;;
->>>>>>> 5a9557e19823b5a989d3f54f5c163bb66f416ada
+  escaped_v
+  (* if signame = "" then escaped_v else signame ^ "." ^ escaped_v *)
 
 (* print the formula (type) in lambdapi format *)
 let rec print_dk_type oc (ex, signame) =
@@ -35,17 +28,20 @@ let rec print_dk_type oc (ex, signame) =
     | Evar (x, _) -> out "%s" x
     | Eapp (Evar (e, _), [], _) -> out "%s" (print_var e signame)
     | Eapp (Evar("=",_),e1::e2::[],_)->
-      out "zen.equal ι %a" print_dk_type_vars ([e1; e2], signame)
+      out "equal %a" print_dk_type_vars ([e1; e2], signame)
     | Eapp (Evar (e, _), l, _) ->
       out "(%s %a)" (print_var e signame) print_dk_type_vars (l, signame)
     | Eor (e1, e2, _) ->
       out "(%a) ∨ (%a)" print_dk_type (e1, signame)
         print_dk_type (e2, signame)
+    | Eand (e1, e2, _) ->
+      out "(%a) ∧ (%a)" print_dk_type (e1, signame)
+        print_dk_type (e2, signame)
     | Eall (v, e, _) ->
-      out "∀ ι (λ (%a : τ ι), %a)"
+      out "∀ %a, %a"
         print_dk_type (v, "") print_dk_type (e, signame)
     | Eex (v, e, _) ->
-      out "∃ (%a) (%a)" print_dk_type (v, "")
+      out "∃ %a, (%a)" print_dk_type (v, "")
         print_dk_type (e, signame)
     | Enot (e, _) ->
       out "¬ (%a)" print_dk_type (e, signame)
@@ -55,7 +51,7 @@ let rec print_dk_type oc (ex, signame) =
     | Eequiv(a, b, _) ->
       out "(%a) ⇔ (%a)" print_dk_type (a, signame)
         print_dk_type (b, signame)
-    | _ -> failwith "Formula not accepted"
+    | _ -> out "[%a]" print_dk_type (ex, signame); failwith "Formula not accepted"
 (* print an application term of the form [f t1 ... tn] *)
 and print_dk_type_vars oc (l, signame) =
     match l with
@@ -69,7 +65,7 @@ let rec print_axioms oc (axioms, signame) =
     match axioms with
     | [] -> ()
     | x::l' ->
-        fprintf oc "(ax_%s : ϵ (%a))\n %a" x
+        fprintf oc "(ax_%s : π (%a))\n %a" x
          print_dk_type ((Hashtbl.find Phrase.name_formula_tbl x), signame)
          print_axioms (l', signame)
 
@@ -114,11 +110,11 @@ let rec print_lemmas oc (proof_tree, fixed_tree) =
     | [] -> ()
     | [g, la] ->
        fprintf oc
-         "let lemmas_%s = %s.delta %a in\nlemmas_%s"
+         "let lemmas_%s ≔ %s.delta %a in\nlemmas_%s"
          g g print_args (la, fixed_tree) g
     | (g, la)::l'->
        fprintf oc
-         "let lemmas_%s = %s.delta %a in\n%a"
+         "let lemmas_%s ≔ %s.delta %a in\n%a"
          g g print_args (la, fixed_tree) print_lemmas (l', fixed_tree)
 
 (* generate a global proof file that contains all the requirements and
@@ -130,8 +126,8 @@ let rec generate_dk name l signame proof_tree goal =
         fprintf oc "require open %s.%s\n" name name;
         print_requires oc proof_tree name;
         fprintf oc "\n";
-        fprintf oc "require open %s.logic.zen\n\n" name;
-        fprintf oc "definition proof_%s \n %a : seq \n" name
+        fprintf oc "require open logic.zen\n\n";
+        fprintf oc "definition proof_%s \n %a : π ⊥ \n" name
           print_axioms (l, signame);
         (*generate_dk_list oc l signame;*)
         fprintf oc "\n ≔ \n";
@@ -152,6 +148,14 @@ let generate_pkg name =
         close_out oc;
         printf "%s \027[32m OK \027[0m\n\n%!" name_file
 
+(* print builtins *)
+let print_builtins oc name = 
+  fprintf oc "set builtin \"A\" ≔ axiom_A\n";
+  fprintf oc "set builtin \"B\" ≔ proof_%s\n" name;
+  fprintf oc "set builtin \"iota\" ≔ iota_b\n";
+  fprintf oc "set builtin \"proof\" ≔ π\n";
+  fprintf oc "set builtin  \"forall\" ≔ ∀\n";
+  fprintf oc "set builtin \"imp\" ≔ imp\n"
 (* and generate_dk_list oc l signame =
     match l with
     | [] -> ()

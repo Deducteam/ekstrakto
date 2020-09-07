@@ -109,9 +109,21 @@ phrase:
   | INCLUDE OPEN LIDENT COMMA LBRACKET name_list RBRACKET CLOSE DOT
       { Phrase.Include ($3, Some ($6)) }
   | INPUT_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula CLOSE DOT
-      { Hashtbl.add Phrase.name_formula_tbl $3 $7; Phrase.Formula (ns_hyp $3, $5, $7, None) }
+      { 
+        if $5 = "conjecture" then 
+          Hashtbl.add Phrase.name_formula_tbl $3 (Expr.enot $7)
+        else
+          Hashtbl.add Phrase.name_formula_tbl $3 $7;
+        Phrase.Formula (ns_hyp $3, $5, $7, None) 
+      }
   | INPUT_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT
-      { Hashtbl.add Phrase.name_formula_tbl $3 $7; Phrase.Formula_annot (ns_hyp $3, $5, $7, $8) }
+      {  
+        if $5 = "conjecture" then 
+          Hashtbl.add Phrase.name_formula_tbl $3 (Expr.enot $7)
+        else
+          Hashtbl.add Phrase.name_formula_tbl $3 $7;
+          Phrase.Formula_annot (ns_hyp $3, $5, $7, $8) 
+      }
   | INPUT_CLAUSE OPEN LIDENT COMMA LIDENT COMMA cnf_formula optional CLOSE DOT
       { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT

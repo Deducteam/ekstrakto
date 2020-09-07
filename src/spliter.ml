@@ -3,6 +3,7 @@ open Namespace
 open Expr
 open Phrase
 
+let roles = ref []
 (* Print error message [msg] for current position of [lexbuf] and exit. *)
 let report_error lexbuf msg =
   let p = Lexing.lexeme_start_p lexbuf in
@@ -39,8 +40,8 @@ let parse_file fname =
 let rec get_inferences tstp_lines =
   match tstp_lines with
   | [] -> []
-  | Formula_annot(_, _, _, Some (Inference(_, _, _)|Name _|List _)) as f::l'
-    -> f :: get_inferences l'
+  | Formula_annot(name, role, _, Some (Inference(_, _, _)|Name _|List _)) as f::l'
+    -> roles := (name, role)::!roles; f :: get_inferences l'
   | _::l' -> get_inferences l'
 
 (* get the premises of an inference rule *)
@@ -66,14 +67,24 @@ let rec get_sequent tstp_lines =
 
 let rec print_hypothesis oc (name, l) =
   match l with
-  | [] -> fprintf oc "%a" Expr.print_expr (Hashtbl.find name_formula_tbl name)
+  | [] ->
+    let role = snd (List.find (fun (x, _) -> x = name) !roles)  in
+    if role = "negated_conjecture" then
+      fprintf oc "(%a)" Expr.print_expr (Hashtbl.find name_formula_tbl name)
+    else  
+      fprintf oc "(%a)" Expr.print_expr (Hashtbl.find name_formula_tbl name)
+    
   | x::l' ->
      fprintf oc "(%a) => (%a)"  Expr.print_expr
        (Hashtbl.find name_formula_tbl x) print_hypothesis (name, l')
 
 (* print the goal to prove in TPTP format *)
 let print_goal oc (name, l) =
-  fprintf oc "fof(%s, conjecture, (%a))." name print_hypothesis (name, l)
+  (* let role = snd (List.find (fun (x, _) -> x = name) !roles)  in
+  if role = "negated_conjecture" then *)
+    fprintf oc "fof(%s, conjecture, (%a))." name print_hypothesis (name, l)
+  (*  else
+    fprintf oc "fof(%s, conjecture, (%a))." name print_hypothesis (name, l) *)
 
 (* generate single TPTP file *)
 let generate_tptp name lines =

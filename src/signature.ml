@@ -11,6 +11,7 @@ let rec get_symbols b e =
      Hashtbl.replace symbols_table x (List.length l, b);
      List.iter (get_symbols false) l
   | Eor (e1, e2, _) -> get_symbols true e1; get_symbols true e2
+  | Eand (e1, e2, _) -> get_symbols true e1; get_symbols true e2
   | Eall (_, e', _) -> get_symbols true e'
   | Eex (_, e', _) -> get_symbols true e'
   | Enot (e', _) -> get_symbols true e'
@@ -22,15 +23,15 @@ let rec get_symbols b e =
 let rec generate_iota oc p =
     match p with
     | 0 -> ()
-    | x -> fprintf oc "τ ι ⇒ %a" generate_iota (x - 1)
+    | x -> fprintf oc "τ ι → %a" generate_iota (x - 1)
 
 (* print the type of a term or a proposition in lambdapi *)
 let get_type oc (b, n) =
     match (b, n) with
-    | (0, true) -> fprintf oc "prop"
+    | (0, true) -> fprintf oc "Prop"
     | (0, false) -> fprintf oc "τ ι"
     | (n, false) -> fprintf oc "%a τ ι" generate_iota n
-    | (n, true) -> fprintf oc "%a prop" generate_iota n
+    | (n, true) -> fprintf oc "%a Prop" generate_iota n
 
 (* let print_symbols ht =
     Hashtbl.iter
@@ -39,11 +40,10 @@ let get_type oc (b, n) =
 (* Generating signature file *)
 let generate_signature_file name ht =
   let name_dk = name ^ ".lp" in
-  let m_name = name in
   let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
   printf "\t ==== Generating signature file ====\n";
-  fprintf oc "require open %s.logic.zen\n" m_name;
+  fprintf oc "require open logic.zen\n";
   Hashtbl.iter
     (fun x n -> fprintf oc "constant symbol %s : %a\n" x get_type n) ht;
   close_out oc;
