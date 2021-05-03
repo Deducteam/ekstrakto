@@ -5,7 +5,7 @@ open Printf
 let rec print_requires oc proof_tree m_name =
   List.iter
     (fun (name, e) ->
-      fprintf oc "require %s.lemmas.%s as %s\n" m_name name name)
+      fprintf oc "require %s.lemmas.%s as %s;\n" m_name name name)
     proof_tree
 
 let escape_name s =
@@ -38,10 +38,10 @@ let rec print_dk_type oc (ex, signame) =
       out "(%a) ∧ (%a)" print_dk_type (e1, signame)
         print_dk_type (e2, signame)
     | Eall (v, e, _) ->
-      out "∀ %a, %a"
+      out "∀ (λ %a, %a)"
         print_dk_type (v, "") print_dk_type (e, signame)
     | Eex (v, e, _) ->
-      out "∃ %a, (%a)" print_dk_type (v, "")
+      out "∃ (λ %a, (%a))" print_dk_type (v, "")
         print_dk_type (e, signame)
     | Enot (e, _) ->
       out "¬ (%a)" print_dk_type (e, signame)
@@ -104,6 +104,26 @@ let rec print_args oc (args, proof_tree) =
        fprintf oc "%a %a" print_arg (x, proof_tree)
          print_args (l', proof_tree)
 
+let rec get_lemmas proof_tree = 
+  match proof_tree with
+  |[] -> []
+  |(x, _)::l' -> x::(get_lemmas l')
+
+
+let rec order_lemmas proof_tree pt goal =
+  match pt with
+  |[] -> []
+  |(l, premises)::pt' -> 
+    if l = goal then 
+      l::(order_premises proof_tree premises)
+    else
+      order_lemmas proof_tree pt' goal
+  and order_premises proof_tree premises = 
+  match premises with
+  |[]     -> []
+  |x::l'  -> let liste = order_lemmas proof_tree proof_tree x in
+    liste @ (order_premises proof_tree l')
+
 (* print how lemmas were constructed as the TSTP file shows *)
 let rec print_lemmas oc (proof_tree, fixed_tree) =
     match proof_tree with
@@ -123,17 +143,18 @@ let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
         printf "\t ==== Generating the proof file ====\n%!";
-        fprintf oc "require open %s.%s\n" name name;
+        fprintf oc "require open %s.%s;\n" name name;
         print_requires oc proof_tree name;
         fprintf oc "\n";
-        fprintf oc "require open logic.zen\n\n";
-        fprintf oc "definition proof_%s \n %a : π ⊥ \n" name
+        fprintf oc "require open logic.zen;\n\n";
+        fprintf oc "symbol proof_%s \n %a : π ⊥ \n" name
           print_axioms (l, signame);
         (*generate_dk_list oc l signame;*)
         fprintf oc "\n ≔ \n";
         (* fprintf oc "%a" generate_abs l; *)
         fprintf oc "\n";
         print_lemmas oc (proof_tree, proof_tree);
+        fprintf oc ";";
         (* fprintf oc "%a." make_one_proof (goal, proof_tree); *)
         close_out oc;
         printf "%s \027[32m OK \027[0m\n\n%!" name_file

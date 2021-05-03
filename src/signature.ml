@@ -43,9 +43,9 @@ let generate_signature_file name ht =
   let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
   printf "\t ==== Generating signature file ====\n";
-  fprintf oc "require open logic.zen\n";
+  fprintf oc "require open logic.zen;\n";
   Hashtbl.iter
-    (fun x n -> fprintf oc "constant symbol %s : %a\n" x get_type n) ht;
+    (fun x n -> fprintf oc "constant symbol %s : %a;\n" x get_type n) ht;
   close_out oc;
   printf "%s \027[32m OK \027[0m\n\n%!" name
 

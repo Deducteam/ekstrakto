@@ -114,8 +114,7 @@ let get_lemmas l = List.map fst l
 let rec last_goal l =
   match l with
   | [] -> failwith "Goal to prove is not provided"
-  | [g, _] -> g
-  | _::l' -> last_goal l'
+  | (g, _)::l' -> if Hashtbl.find name_formula_tbl g = Expr.efalse then g else last_goal l'
 
 (* get all axioms used in each step of the proof *)
 let rec get_axioms inferences lemmas =
@@ -129,6 +128,15 @@ and check_axiom l lemmas =
   | x::l' ->
      if List.exists ((=) x) lemmas then check_axiom l' lemmas
      else x :: check_axiom l' lemmas
+let rec uniq l liste =
+  match l with
+  |[]     -> []
+  |x::l'  -> if List.exists ((=) x) liste then uniq l' liste else x::(uniq l' (x::liste))
+
+let rec construct_premises l lemmas =
+  match l with
+  |[] -> []
+  |x::l' -> (List.find (fun (x1, _) -> x1 = x) lemmas)::(construct_premises l' lemmas)
 
 (* starting point of the program *)
 let _ =
@@ -156,7 +164,11 @@ let _ =
         Phrase.name_formula_tbl *)
      insert_symbols Phrase.name_formula_tbl;
      Signature.generate_signature_file name Signature.symbols_table;
-     Proof.generate_dk name axioms name premises l_goal;
+     let liste = Proof.order_lemmas premises premises l_goal in
+     let liste = List.rev liste in
+     let liste = uniq liste [] in
+     let liste = construct_premises liste premises in
+     Proof.generate_dk name axioms name liste l_goal;
      Proof.generate_pkg name;
      let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/logic" in
      if Sys.command cmd != 0 then
