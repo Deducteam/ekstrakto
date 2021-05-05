@@ -23,14 +23,14 @@ let rec get_symbols b e =
 let rec generate_iota oc p =
     match p with
     | 0 -> ()
-    | x -> fprintf oc "τ ι → %a" generate_iota (x - 1)
+    | x -> fprintf oc "ι → %a" generate_iota (x - 1)
 
 (* print the type of a term or a proposition in lambdapi *)
 let get_type oc (b, n) =
     match (b, n) with
     | (0, true) -> fprintf oc "Prop"
-    | (0, false) -> fprintf oc "τ ι"
-    | (n, false) -> fprintf oc "%a τ ι" generate_iota n
+    | (0, false) -> fprintf oc "ι"
+    | (n, false) -> fprintf oc "%a ι" generate_iota n
     | (n, true) -> fprintf oc "%a Prop" generate_iota n
 
 (* let print_symbols ht =
