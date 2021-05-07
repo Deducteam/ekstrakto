@@ -23,14 +23,14 @@ let rec get_symbols b e =
 let rec generate_iota oc p =
     match p with
     | 0 -> ()
-    | x -> fprintf oc "ι → %a" generate_iota (x - 1)
+    | x -> fprintf oc "κ → %a" generate_iota (x - 1)
 
 (* print the type of a term or a proposition in lambdapi *)
 let get_type oc (b, n) =
     match (b, n) with
     | (0, true) -> fprintf oc "Prop"
-    | (0, false) -> fprintf oc "ι"
-    | (n, false) -> fprintf oc "%a ι" generate_iota n
+    | (0, false) -> fprintf oc "κ"
+    | (n, false) -> fprintf oc "%a κ" generate_iota n
     | (n, true) -> fprintf oc "%a Prop" generate_iota n
 
 (* let print_symbols ht =
@@ -43,6 +43,7 @@ let generate_signature_file name ht =
   let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
   printf "\t ==== Generating signature file ====\n";
+  fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
   fprintf oc "require open logic.zen;\n";
   Hashtbl.iter
     (fun x n -> fprintf oc "constant symbol %s : %a;\n" x get_type n) ht;

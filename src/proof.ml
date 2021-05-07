@@ -65,7 +65,7 @@ let rec print_axioms oc (axioms, signame) =
     match axioms with
     | [] -> ()
     | x::l' ->
-        fprintf oc "(ax_%s : π (%a))\n %a" x
+        fprintf oc "(ax_%s : ϵ (%a))\n %a" x
          print_dk_type ((Hashtbl.find Phrase.name_formula_tbl x), signame)
          print_axioms (l', signame)
 
@@ -143,11 +143,12 @@ let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
         printf "\t ==== Generating the proof file ====\n%!";
+        fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
         fprintf oc "require open %s.%s;\n" name name;
         print_requires oc proof_tree name;
         fprintf oc "\n";
         fprintf oc "require open logic.zen;\n\n";
-        fprintf oc "symbol proof_%s \n %a : π ⊥ \n" name
+        fprintf oc "symbol proof_%s \n %a : ϵ ⊥ \n" name
           print_axioms (l, signame);
         (*generate_dk_list oc l signame;*)
         fprintf oc "\n ≔ \n";
@@ -174,7 +175,7 @@ let print_builtins oc name =
   fprintf oc "set builtin \"A\" ≔ axiom_A\n";
   fprintf oc "set builtin \"B\" ≔ proof_%s\n" name;
   fprintf oc "set builtin \"iota\" ≔ iota_b\n";
-  fprintf oc "set builtin \"proof\" ≔ π\n";
+  fprintf oc "set builtin \"proof\" ≔ ϵ\n";
   fprintf oc "set builtin  \"forall\" ≔ ∀\n";
   fprintf oc "set builtin \"imp\" ≔ imp\n"
 (* and generate_dk_list oc l signame =
