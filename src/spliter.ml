@@ -88,12 +88,12 @@ let print_goal oc (name, l) =
 
 (* generate single TPTP file *)
 let generate_tptp name lines =
-  printf "Process problem %s%!" name;
+  (* printf "Process problem %s%!" name; *)
   let goal_name = Filename.remove_extension (Filename.basename name) in
   let oc = open_out name in
   fprintf oc "%a\n" print_goal (goal_name, lines);
-  close_out oc;
-  printf "\t \027[32m OK \027[0m\n%!"
+  close_out oc
+  (* printf "\t \027[32m OK \027[0m\n%!" *)
 
 (* generate a file for each step of the proof *)
 let rec generate_files tstp_fname premises =
