@@ -164,10 +164,7 @@ let _ =
         Phrase.name_formula_tbl *)
      insert_symbols Phrase.name_formula_tbl;
      Signature.generate_signature_file name Signature.symbols_table;
-     let liste = Proof.order_lemmas premises premises l_goal in
-     let liste = List.rev liste in
-     let liste = uniq liste [] in
-     let liste = construct_premises liste premises in
+     let liste = Proof.order_lemmas premises l_goal in
      Proof.generate_dk name axioms name liste l_goal;
      Proof.generate_pkg name;
      let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/logic" in

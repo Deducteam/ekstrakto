@@ -110,19 +110,17 @@ let rec get_lemmas proof_tree =
   |(x, _)::l' -> x::(get_lemmas l')
 
 
-let rec order_lemmas proof_tree pt goal =
-  match pt with
-  |[] -> []
-  |(l, premises)::pt' -> 
-    if l = goal then 
-      l::(order_premises proof_tree premises)
-    else
-      order_lemmas proof_tree pt' goal
-  and order_premises proof_tree premises = 
-  match premises with
-  |[]     -> []
-  |x::l'  -> let liste = order_lemmas proof_tree proof_tree x in
-    liste @ (order_premises proof_tree l')
+let rec order_lemmas_aux proof_tree accu goal =
+  if List.mem_assoc goal accu then accu
+  else
+    try
+      let ps = List.assoc goal proof_tree in
+      (goal,ps)::List.fold_left (order_lemmas_aux proof_tree)
+                   accu ps
+    with Not_found -> accu
+
+let order_lemmas proof_tree goal =
+  List.rev @@ order_lemmas_aux proof_tree [] goal
 
 (* print how lemmas were constructed as the TSTP file shows *)
 let rec print_lemmas oc (proof_tree, fixed_tree) =
