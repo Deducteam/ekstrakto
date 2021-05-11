@@ -7,10 +7,20 @@ let rec print_requires oc proof_tree m_name =
     (fun (name, e) ->
       fprintf oc "require %s.lemmas.%s as %s;\n" m_name name name)
     proof_tree
-
+let forbidden_idents = ["abort";"admit";"admitted";"apply";"as";"assert";"assertnot";
+                        "associative";"assume";"begin";"builtin";"commutative";"compute";
+                        "constant";"debug";"end";"fail";"flag";"focus";"have";"generalize";
+                        "in";"induction";"inductive";"infix";"injective";"left";"let";
+                        "notation";"off";"on";"opaque";"open";"prefix";"print";"private";
+                        "proofterm";"protected";"prover";"prover_timeout";"quantifier";
+                        "refine";"reflexivity";"require";"rewrite";"right";"rule";"sequential";
+                        "simplify";"solve";"symbol";"symmetry";"type";"TYPE";"unif_rule";
+                        "verbose";"why3";"with"; "_"]
 let escape_name s =
   let id_regex = Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$" in
-  if Str.string_match id_regex s 0 then s else "{|" ^ s ^ "|}"
+  if Str.string_match id_regex s 0 
+    && List.for_all ((<>) s) forbidden_idents 
+    then s else "{|" ^ s ^ "|}"
 
 (* add {|VAR|} pattern for each variable to avoid unicode characters
    and check if it belongs to signature or not *)
