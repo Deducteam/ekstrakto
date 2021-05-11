@@ -167,12 +167,6 @@ let _ =
      let liste = Proof.order_lemmas premises l_goal in
      Proof.generate_dk name axioms name liste l_goal;
      Proof.generate_pkg name;
-     let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/logic" in
-     if Sys.command cmd != 0 then
-       (printf "Error while creating the folder %s/logic\n" name; exit 1);
-     let cmd =
-       "cp -r ~/.ekstrakto/logic/*.lp " ^ cwd ^ "/" ^ name ^ "/logic/" in
-     if Sys.command cmd = 0 then ();
      Signature.generate_makefile name;
   | _  ->
      eprintf "Usage: %s file.p\n%!" Sys.argv.(0);
