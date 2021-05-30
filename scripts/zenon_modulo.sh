@@ -4,8 +4,8 @@ NBJOBS=56
 
 function call_zenon() {
   INPUT="$1"
-  FOLDER="`echo $INPUT|cut -d'/' -f 3`"
-  FILE="`echo $INPUT|cut -d'/' -f 5`"
+  FOLDER="`echo $INPUT|cut -d'/' -f 4`"
+  FILE="`echo $INPUT|cut -d'/' -f 6`"
   OUTPUT="~/yacine/proofs_eprover/$FOLDER/lemmas/$(basename $FILE .p).lp"
   if zenon_modulo -itptp -modulo -modulo-heuri -odkterm -sig $FOLDER -max-time \
     10s -max-size 2G $INPUT > $OUTPUT 2> /dev/null

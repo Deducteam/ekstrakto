@@ -38,7 +38,7 @@ let rec print_dk_type oc (ex, signame) =
     | Evar (x, _) -> out "%s" x
     | Eapp (Evar (e, _), [], _) -> out "%s" (print_var e signame)
     | Eapp (Evar("=",_),e1::e2::[],_)->
-      out "equal %a" print_dk_type_vars ([e1; e2], signame)
+      out "%a = %a" print_dk_type (e1, signame) print_dk_type (e2, signame)
     | Eapp (Evar (e, _), l, _) ->
       out "(%s %a)" (print_var e signame) print_dk_type_vars (l, signame)
     | Eor (e1, e2, _) ->
@@ -75,7 +75,7 @@ let rec print_axioms oc (axioms, signame) =
     match axioms with
     | [] -> ()
     | x::l' ->
-        fprintf oc "(ax_%s : ϵ (%a))\n %a" x
+        fprintf oc "symbol %s_ax : ϵ (%a);\n%a" x
          print_dk_type ((Hashtbl.find Phrase.name_formula_tbl x), signame)
          print_axioms (l', signame)
 
@@ -103,7 +103,7 @@ and get_axioms goal proof_tree =
 
 (* print one arg inside the proof (axiom or a lemma) *)
 let print_arg oc (s, proof_tree) =
-  if is_axiom s proof_tree then fprintf oc "ax_%s" s
+  if is_axiom s proof_tree then fprintf oc "%s_ax" s
   else fprintf oc "lemmas_%s" s
 
 (* print all args inside the proof *)
@@ -138,11 +138,11 @@ let rec print_lemmas oc (proof_tree, fixed_tree) =
     | [] -> ()
     | [g, la] ->
        fprintf oc
-         "let lemmas_%s ≔ %s.delta %a in\nlemmas_%s"
-         g g print_args (la, fixed_tree) g
+         "opaque symbol lemmas_%s ≔ %s.delta %a;\n"
+         g g print_args (la, fixed_tree) 
     | (g, la)::l'->
        fprintf oc
-         "let lemmas_%s ≔ %s.delta %a in\n%a"
+         "opaque symbol lemmas_%s ≔ %s.delta %a;\n%a"
          g g print_args (la, fixed_tree) print_lemmas (l', fixed_tree)
 
 (* generate a global proof file that contains all the requirements and
@@ -156,14 +156,11 @@ let rec generate_dk name l signame proof_tree goal =
         print_requires oc proof_tree name;
         fprintf oc "\n";
         fprintf oc "require open logic.zen;\n\n";
-        fprintf oc "symbol proof_%s \n %a : ϵ ⊥ \n" name
-          print_axioms (l, signame);
-        (*generate_dk_list oc l signame;*)
-        fprintf oc "\n ≔ \n";
-        (* fprintf oc "%a" generate_abs l; *)
-        fprintf oc "\n";
+        fprintf oc "%a" print_axioms (l, signame);
         print_lemmas oc (proof_tree, proof_tree);
-        fprintf oc ";";
+        fprintf oc "symbol proof_%s : ϵ ⊥ ≔ lemmas_%s;" name goal;
+        (*generate_dk_list oc l signame;*)
+        (* fprintf oc "%a" generate_abs l; *)
         (* fprintf oc "%a." make_one_proof (goal, proof_tree); *)
         close_out oc;
         printf "%s \027[32m OK \027[0m\n\n%!" name_file
