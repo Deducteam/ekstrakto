@@ -150,7 +150,6 @@ let rec print_lemmas oc (proof_tree, fixed_tree) =
 let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
-        printf "\t ==== Generating the proof file ====\n%!";
         fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
         fprintf oc "require open %s.%s;\n" name name;
         print_requires oc proof_tree name;
@@ -163,17 +162,16 @@ let rec generate_dk name l signame proof_tree goal =
         (* fprintf oc "%a" generate_abs l; *)
         (* fprintf oc "%a." make_one_proof (goal, proof_tree); *)
         close_out oc;
-        printf "%s \027[32m OK \027[0m\n\n%!" name_file
+        printf "Generating proof file for [%s] \027[32m OK \027[0m\n%!" name_file
 
 (* generate package file *)
 let generate_pkg name =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/lambdapi.pkg") in
     let oc = open_out name_file in
-        printf "\t ==== Generating the package file ====\n%!";
         fprintf oc "package_name = %s\n" name;
         fprintf oc "root_path = %s\n" name;
         close_out oc;
-        printf "%s \027[32m OK \027[0m\n\n%!" name_file
+        printf "Generating package file for [%s] \027[32m OK \027[0m\n%!" name_file
 
 (* print builtins *)
 let print_builtins oc name = 

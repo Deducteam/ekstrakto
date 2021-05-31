@@ -154,10 +154,10 @@ let _ =
      let cmd = "mkdir -p " ^ cwd ^ "/" ^ name ^ "/lemmas" in
      if Sys.command cmd != 0 then
        (printf "Error while creating the folder %s/lemmas\n" name; exit 1);
-     printf "\t ==== Generating %i TPTP Problems from %s ==== \n%!"
+     printf "Generating %i TPTP Problems from [%s] %!"
        (List.length premises) fname;
      generate_files name premises;
-     printf "\n%!";
+     printf "\t \027[32m OK \027[0m\n%!";
      (* Printing all formulas in name_formula_tbl *)
      (* Hashtbl.iter
         (fun x y -> printf "%s : %s\n%!" x (Expr.expr_to_string y))
