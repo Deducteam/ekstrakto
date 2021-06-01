@@ -145,7 +145,7 @@ let _ =
      let res : Phrase.tpphrase list = parse_file fname in
      let inferences = get_inferences res in
      let premises = get_sequent inferences in
-     let axioms = get_axioms premises (get_lemmas premises) in
+     let axioms = uniq (get_axioms premises (get_lemmas premises)) [] in
      let l_goal = last_goal premises in
      (* let () = List.iter (fun m -> printf "%s" m)
         (get_axioms premises (get_lemmas premises)) in *)
