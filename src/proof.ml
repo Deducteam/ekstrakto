@@ -151,10 +151,10 @@ let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
         fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
+        fprintf oc "require open logic.zen;\n\n";
         fprintf oc "require open %s.%s;\n" name name;
         print_requires oc proof_tree name;
         fprintf oc "\n";
-        fprintf oc "require open logic.zen;\n\n";
         fprintf oc "%a" print_axioms (l, signame);
         print_lemmas oc (proof_tree, proof_tree);
         fprintf oc "symbol proof_%s : ϵ ⊥ ≔ lemmas_%s;" name goal;
