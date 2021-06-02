@@ -14,15 +14,15 @@ definition bool__t ≔ dk_bool.bool
 definition true ≔ dk_bool.true
 definition false ≔ dk_bool.false
 
-definition _amper__amper_ : cc.eT bool__t ⇒ cc.eT bool__t ⇒ cc.eT bool__t
+definition _amper__amper_ : cc.eT bool__t → cc.eT bool__t → cc.eT bool__t
                ≔ dk_bool.{|and|}
 
-definition _bar__bar_ : cc.eT bool__t ⇒ cc.eT bool__t ⇒ cc.eT bool__t
+definition _bar__bar_ : cc.eT bool__t → cc.eT bool__t → cc.eT bool__t
            ≔ dk_bool.or
 
-definition _tilda__tilda_ : cc.eT bool__t ⇒ cc.eT bool__t ≔ dk_bool.not
+definition _tilda__tilda_ : cc.eT bool__t → cc.eT bool__t ≔ dk_bool.not
 
-definition _bar__lt__gt__bar_ : cc.eT bool__t ⇒ cc.eT bool__t ⇒ cc.eT bool__t
+definition _bar__lt__gt__bar_ : cc.eT bool__t → cc.eT bool__t → cc.eT bool__t
                    ≔ dk_bool.xor
 
 definition prod ≔ dk_tuple.prod
@@ -46,18 +46,18 @@ definition snd (a : cc.uT)
         cc.eT b ≔
       dk_tuple.snd a b x
 
-symbol _equal_ : ∀ (a : cc.uT), cc.eT a ⇒ cc.eT a ⇒ cc.eT bool__t
+symbol _equal_ : Π (a : cc.uT), cc.eT a → cc.eT a → cc.eT bool__t
 
 definition syntactic_equal ≔ _equal_
 
-symbol __beq_refl  : ∀ (a : cc.uT) (x : cc.eT a),
+symbol __beq_refl  : Π (a : cc.uT) (x : cc.eT a),
               dk_logic.eP (dk_logic.ebP (_equal_ a x x))
 
-symbol __beq_symm  : ∀ (a : cc.uT) (x : cc.eT a) (y : cc.eT a),
-              dk_logic.eP (dk_logic.ebP (_equal_ a x y)) ⇒
+symbol __beq_symm  : Π (a : cc.uT) (x : cc.eT a) (y : cc.eT a),
+              dk_logic.eP (dk_logic.ebP (_equal_ a x y)) →
               dk_logic.eP (dk_logic.ebP (_equal_ a y x))
 
-symbol __beq_trans  : ∀ (a : cc.uT) (x : cc.eT a) (y : cc.eT a) (z : cc.eT a),
-               dk_logic.eP (dk_logic.ebP (_equal_ a x y)) ⇒
-               dk_logic.eP (dk_logic.ebP (_equal_ a y z)) ⇒
+symbol __beq_trans  : Π (a : cc.uT) (x : cc.eT a) (y : cc.eT a) (z : cc.eT a),
+               dk_logic.eP (dk_logic.ebP (_equal_ a x y)) →
+               dk_logic.eP (dk_logic.ebP (_equal_ a y z)) →
                dk_logic.eP (dk_logic.ebP (_equal_ a x z))

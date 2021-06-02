@@ -3,7 +3,7 @@ DEPS=$(wildcard src/*.ml src/*.mli src/*.mly src/*.mll)
 all: spliter.native
 
 spliter.native: $(DEPS)
-	ocamlbuild src/$@
+	ocamlbuild src/$@ -lib str
 
 # (Un)Installation
 

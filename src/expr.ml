@@ -117,16 +117,17 @@ let rec print_expr oc e =
   | Eapp (Evar("!=", _), e1::e2::[], _) ->
      fprintf oc "%a != %a" print_expr e1 print_expr e2
   | Eapp (e, l, _) -> fprintf oc "%a (%a)" print_expr e print_expr_list l
-  | Eor (e1, e2, _) ->  fprintf oc "%a|%a" print_expr e1 print_expr e2
+  | Eor (e1, e2, _) ->  fprintf oc "(%a)|(%a)" print_expr e1 print_expr e2
+  | Eand (e1, e2, _) ->  fprintf oc "(%a)&(%a)" print_expr e1 print_expr e2
   | Eall (v, e, _) as f ->
      fprintf oc "![%a] : (%a)" print_var_all (get_var_all f)
        print_expr (get_e_all f)
   | Eex (v, e, _) as f ->
      fprintf oc "?[%a] : (%a)" print_var_all (get_var_ex f)
        print_expr (get_e_ex f)
-  | Enot (e, _) -> fprintf oc "~%a" print_expr e
-  | Eimply(a, b, _) -> fprintf oc "%a => %a" print_expr a print_expr b
-  | Eequiv(a, b, _) -> fprintf oc "%a <=> %a" print_expr a print_expr b
+  | Enot (e, _) -> fprintf oc "~(%a)" print_expr e
+  | Eimply(a, b, _) -> fprintf oc "(%a) => (%a)" print_expr a print_expr b
+  | Eequiv(a, b, _) -> fprintf oc "(%a) <=> (%a)" print_expr a print_expr b
   | _ -> failwith "Formula not accepted"
 
 and print_expr_list oc l =
@@ -658,8 +659,8 @@ type t = expr
 let hash = get_hash
 let equal = (==)
 let compare x y =
-  match Pervasives.compare (hash x) (hash y) with
-  | 0 -> if equal x y then 0 else Pervasives.compare x y
+  match Stdlib.compare (hash x) (hash y) with
+  | 0 -> if equal x y then 0 else Stdlib.compare x y
   | x when x < 0 -> -1
   | _ -> 1
 
