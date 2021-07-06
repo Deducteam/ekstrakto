@@ -75,7 +75,7 @@ let rec list_last l =
   match l with
   | [] -> raise Not_found
   | [x] -> x
-  | h::t -> list_last t
+  | _::t -> list_last t
 
 let rec xlist_iteri f l i =
   match l with
@@ -137,7 +137,7 @@ let rec list_nth_tail l n =
   if n = 0 then l else
   match l with
   | [] -> raise (Invalid_argument "list_nth_tail")
-  | h :: t -> list_nth_tail t (n - 1)
+  | _ :: t -> list_nth_tail t (n - 1)
 
 let debug = Printf.eprintf
 

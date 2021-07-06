@@ -8,14 +8,14 @@ module Error = struct
 
   open Printf
 
-  let warnings_flag = ref true
-  let got_warning = ref false
+  (* let warnings_flag = ref true *)
+  (* let got_warning = ref false *)
   let err_file = ref ""
 
   let print_header = ref false
   let header = ref ""
 
-  let set_header msg = print_header := true; header := msg
+  (* let set_header msg = print_header := true; header := msg *)
   
   let err_oc = ref stderr
   let err_inited = ref false
@@ -29,11 +29,11 @@ module Error = struct
     fprintf !err_oc "%s%s\n" kind msg;
     flush !err_oc
   
-  let warn msg =
+  (* let warn msg =
     if !warnings_flag then begin
       print "Zenon warning: " msg;
       got_warning := true
-    end
+    end *)
   
   let err msg = print "Zenon error: " msg
 
@@ -45,13 +45,13 @@ module Error = struct
     print "Zenon error: " msg
   
   exception Lex_error of string
-  exception Abort
+  (* exception Abort *)
 
 end
 
-let rec count_lf i s accu =
+(* let rec count_lf i s accu =
   if i >= String.length s then accu
-  else count_lf (i+1) s (if s.[i] = '\n' then accu + 1 else accu)
+  else count_lf (i+1) s (if s.[i] = '\n' then accu + 1 else accu) *)
 
 let adjust_pos lexbuf =
   let lx = Lexing.lexeme lexbuf in
@@ -110,6 +110,7 @@ rule token = parse
   | "inference"      { INFERENCE }
   | "theory"         { THEORY }
   | "introduced"     { INTRODUCED }
+  | "avatar_definition" { AVATAR_DEFINITION }
   | "ac"             { AC }
   | "file"           { FILE }
   | "creator"        { CREATOR }

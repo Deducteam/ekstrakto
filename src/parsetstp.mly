@@ -1,8 +1,8 @@
 %{
 
-open Printf
+(* open Printf *)
 open Expr
-open Phrase
+(* open Phrase *)
 
 let ns pre s = (if !Globals.namespace_flag then pre else "") ^ s
 let ns_hyp s = ns "" s (* "H_" *)
@@ -55,6 +55,7 @@ let cnf_to_formula l =
 %token FILE
 %token INFERENCE
 %token INTRODUCED
+%token AVATAR_DEFINITION
 %token UNKNOWN
 %token AC
 %token THEORY
@@ -125,7 +126,7 @@ phrase:
           Phrase.Formula_annot (ns_hyp $3, $5, $7, $8) 
       }
   | INPUT_CLAUSE OPEN LIDENT COMMA LIDENT COMMA cnf_formula optional CLOSE DOT
-      { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
+     { Hashtbl.add Phrase.name_formula_tbl $3 (cnf_to_formula $7); Phrase.Formula_annot ($3, $5, cnf_to_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA formula optional CLOSE DOT
      { Hashtbl.add Phrase.name_formula_tbl $3 (quantify_formula $7); Phrase.Formula_annot (ns_hyp $3, "tff_" ^ $5, quantify_formula $7, $8) }
   | INPUT_TFF_FORMULA OPEN LIDENT COMMA LIDENT COMMA type_def CLOSE DOT
@@ -237,6 +238,7 @@ source_list:
 dag_source:
 | LIDENT { Phrase.Name $1 }
 | INFERENCE OPEN LIDENT COMMA useful_info COMMA LBRACKET source_list RBRACKET CLOSE { Phrase.Inference ($3, $5, $8) }
+| INTRODUCED OPEN AVATAR_DEFINITION COMMA LBRACKET LIDENT OPEN LIDENT COMMA LBRACKET LIDENT RBRACKET CLOSE RBRACKET CLOSE { Phrase.Introduced $11 }
 ;
 internal_source:
 | INTRODUCED OPEN LIDENT optional_info CLOSE { $3 }

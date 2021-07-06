@@ -38,7 +38,7 @@ let get_type oc (b, n) =
       (fun x n -> printf "def %s : %s.\n%!" x (get_type (fst n) (snd n))) ht *)
 
 (* Generating signature file *)
-let generate_signature_file name ht =
+let generate_signature_file name ht avatar_definitions =
   let name_dk = name ^ ".lp" in
   let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
@@ -46,6 +46,8 @@ let generate_signature_file name ht =
   fprintf oc "require open logic.zen;\n";
   Hashtbl.iter
     (fun x n -> fprintf oc "constant symbol %s : %a;\n" (Proof.escape_name x) get_type n) ht;
+  List.iter
+    (fun (n, f) -> fprintf oc "symbol %s : Prop ≔ %a;\n" (Proof.escape_name (n ^ "_av_ax")) Proof.print_dk_type (f, "default_signame")) avatar_definitions;
   close_out oc;
   printf "Generating signature file for [%s] \027[32m OK \027[0m\n%!" name
 

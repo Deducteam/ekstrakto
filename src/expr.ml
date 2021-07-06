@@ -10,8 +10,8 @@ module Globals = struct
 end
 
 let ( =%= ) = ( = )
-let ( = ) = ()
-let ( <> ) = ()
+(* let ( = ) = () *)
+(* let ( <> ) = () *)
 
 type expr =
   | Evar of string * private_info
@@ -50,7 +50,7 @@ let rec get_var_all e =
 (* get the quantified formula ![X, ..., Y] : F -> F*)
 let rec get_e_all e =
   match e with
-  | Eall(v, e', _) -> get_e_all e'
+  | Eall(_, e', _) -> get_e_all e'
   | e' -> e'
 
 (* get all quantified vars [X; ...; Y] *)
@@ -62,7 +62,7 @@ let rec get_var_ex e =
 (* get the quantified formula ? [X, ..., Y] : F -> F*)
 let rec get_e_ex e =
   match e with
-  | Eex(v, e', _) -> get_e_ex e'
+  | Eex(_, e', _) -> get_e_ex e'
   | e' -> e'
 
 (* get all quantified vars ![X, ..., Y] *)
@@ -119,10 +119,10 @@ let rec print_expr oc e =
   | Eapp (e, l, _) -> fprintf oc "%a (%a)" print_expr e print_expr_list l
   | Eor (e1, e2, _) ->  fprintf oc "(%a)|(%a)" print_expr e1 print_expr e2
   | Eand (e1, e2, _) ->  fprintf oc "(%a)&(%a)" print_expr e1 print_expr e2
-  | Eall (v, e, _) as f ->
+  | Eall (_, _, _) as f ->
      fprintf oc "![%a] : (%a)" print_var_all (get_var_all f)
        print_expr (get_e_all f)
-  | Eex (v, e, _) as f ->
+  | Eex (_, _, _) as f ->
      fprintf oc "?[%a] : (%a)" print_var_all (get_var_ex f)
        print_expr (get_e_ex f)
   | Enot (e, _) -> fprintf oc "~(%a)" print_expr e
@@ -178,7 +178,7 @@ let k_true  = 0xb063cd7
 and k_false = 0xd5ab9f0
 and k_meta  = 0x33d092c
 and k_app   = 0x33b9c25
-and k_arrow = 0x0123456 (* TODO: fixme *)
+(* and k_arrow = 0x0123456 *)  (* TODO: fixme *)
 and k_not   = 0x7c3e7d2
 and k_and   = 0xccdc15b
 and k_or    = 0x49b55b9
@@ -276,11 +276,11 @@ let get_taus e = (get_priv e).taus
 let get_metas e = (get_priv e).metas
 let get_submetas e = (get_priv e).submetas
 
-let get_unsafe_type e =
+(* let get_unsafe_type e =
   if e == v_type_type then assert false
   else match (get_priv e).typ with
        | Some ty -> ty
-       | None -> type_type
+       | None -> type_type *)
 
 let get_type e =
   if e == type_type || e == v_type_type
@@ -321,10 +321,10 @@ let rec remove x l =
   | Evar (v, _), h::t when v =%= h -> t
   | _, h::t -> h :: (remove x t)
 
-let rec make_list c acc = function
+(* let rec make_list c acc = function
     | 0 -> acc
     | n when n > 0 -> make_list c (c :: acc) (n - 1)
-    | _ -> assert false
+    | _ -> assert false *)
 
 let prop_app l =
     let aux l =
@@ -344,7 +344,7 @@ let prop_app l =
    together with substitution *)
 let priv_var s t = mkpriv 0 [s] 1 0 [] [] t
 
-let rec priv_arrow args ret =
+let priv_arrow args ret =
   let l = ret :: args in
   let comb_skel accu e = combine (get_skel e) accu in
   let skel = combine k_app (List.fold_left comb_skel (get_hash ret) args) in
@@ -422,7 +422,7 @@ let priv_tau v e =
 
 (************************)
 (* temp printer *)
-let rec print b ex =
+(* let rec print b ex =
   match ex with
   | Evar (v, _) -> bprintf b "%s" v;
   | Emeta (e, _) -> bprintf b "Meta.(%a)" print e;
@@ -456,7 +456,7 @@ let rec print b ex =
       bprintf b "(Tau.(%a : %a): _)" print v print (get_type v) (*print e*)
   | Elam (v, e, _) ->
       bprintf b "(Lam.(%a : %a): %a)" print v print (get_type v) print e
-
+*)
 (************************)
 (* Hashconsing module for expressions *)
 
@@ -729,7 +729,7 @@ let rec rm_binding v map =
 let conflict v map =
   match v with
   | Evar (vv, _) ->
-      List.exists (fun (w, e) -> List.mem vv (get_fv e)) map
+      List.exists (fun (_, e) -> List.mem vv (get_fv e)) map
   | _ -> assert false
 
 let disj vars map =
@@ -807,7 +807,7 @@ and substitute_unsafe map e =
   in
   match e with
   | _ when disj (get_fv e) map -> e
-  | Evar (v, _) -> (try List.assq e map with Not_found -> e)
+  | Evar (_, _) -> (try List.assq e map with Not_found -> e)
   | Emeta _ -> e
   | Earrow(args, ret, _) ->
      earrow (List.map (substitute_unsafe map) args) (substitute_unsafe map ret)
@@ -842,7 +842,7 @@ let substitute = substitute_unsafe
 
 let rec substitute_meta map e =
   match e with
-  | Evar (v, _) -> e
+  | Evar (_, _) -> e
   | Emeta (e', _) -> let (meta, v) = map in if e' == meta then v else e
   | Earrow(args, ret, _) ->
      earrow (List.map (substitute_meta map) args) (substitute_meta map ret)
@@ -879,7 +879,7 @@ let rec substitute_expr map e =
   | Elam (v, f, _) -> elam (v, substitute_expr map f)
 *)
 
-let rec substitute_2nd_unsafe map e =
+(* let rec substitute_2nd_unsafe map e =
   match e with
   | Evar (v, _) -> (try List.assq e map with Not_found -> e)
   | Emeta _ -> e
@@ -933,14 +933,14 @@ let rec substitute_2nd_unsafe map e =
         let nv = newtvar (get_type v) in
         elam (nv, substitute_2nd_unsafe ((v, nv) :: map1) f)
       else
-        elam (v, substitute_2nd_unsafe map1 f)
+        elam (v, substitute_2nd_unsafe map1 f) *)
 
-and substitute_2nd_safe map e =
+(* and substitute_2nd_safe map e =
   if (List.for_all (fun (a, b) -> get_type a == get_type b) map)
   then substitute_2nd_unsafe map e
-  else raise (Ill_typed_substitution map)
+  else raise (Ill_typed_substitution map) *)
 
-let substitute_2nd = substitute_2nd_unsafe
+(* let substitute_2nd = substitute_2nd_unsafe *)
 
 let apply f a =
   match f with
@@ -950,13 +950,13 @@ let apply f a =
 let add_argument f a =
   match f with
   | Elam _ -> apply f a
-  | Evar (s, _) -> eapp (f, [a])
+  | Evar (_, _) -> eapp (f, [a])
   | Eapp (s, args, _) -> eapp (s, args @ [a])
   | _ -> raise Higher_order
 
-let rec remove_scope e =
+(* let rec remove_scope e =
   match e with
-  | Eapp (f, e1 :: t :: vals, _) when get_name f =%= "$scope" ->
+  | Eapp (f, e1 :: t :: _, _) when get_name f =%= "$scope" ->
      remove_scope (apply e1 t)
   | Earrow _ -> assert false
   | Eapp (f, args, _) -> e
@@ -968,7 +968,7 @@ let rec remove_scope e =
   | Eall (v, e1, _) -> eall (v, remove_scope e1)
   | Eex (v, e1, _) -> eex (v, remove_scope e1)
   | Evar _ | Emeta _ | Etrue | Efalse | Etau _ | Elam _
-  -> e
+  -> e *)
 
 let nb_tvar e =
   match e with

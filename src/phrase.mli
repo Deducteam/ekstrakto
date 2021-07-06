@@ -7,6 +7,7 @@ type infoitem =
 type tpannot =
   | File of string
   | Inference of string * infoitem list * tpannot list
+  | Introduced of string
   | Name of string
   | List of tpannot list
   | Other of string

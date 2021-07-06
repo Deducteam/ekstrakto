@@ -1,6 +1,6 @@
 open Printf
-open Namespace
-open Expr
+(* open Namespace *)
+(* open Expr *)
 open Phrase
 
 let roles = ref []
@@ -43,6 +43,18 @@ let rec get_inferences tstp_lines =
   | Formula_annot(name, role, _, Some (Inference(_, _, _)|Name _|List _)) as f::l'
     -> roles := (name, role)::!roles; f :: get_inferences l'
   | _::l' -> get_inferences l'
+
+let get_equiv_right formula = 
+  match formula with
+  |Expr.Eequiv(_, f, _) -> f
+  |_            -> failwith "The formula is not an equivalence."
+
+let rec declare_avatar_definitions tstp_lines =
+  match tstp_lines with
+  | [] -> []
+  | Formula_annot(_, _, formula, Some (Introduced(n))) ::l'
+    -> (n, (get_equiv_right formula)) :: declare_avatar_definitions l'
+  | _::l' -> declare_avatar_definitions l'
 
 (* get the premises of an inference rule *)
 let rec get_premises annotation =
@@ -105,7 +117,7 @@ let rec generate_files tstp_fname premises =
      generate_files tstp_fname l'
 
 let insert_symbols ht =
-  Hashtbl.iter (fun x y -> Signature.get_symbols true y) ht
+  Hashtbl.iter (fun _ y -> Signature.get_symbols true y) ht
 
 (* get only the name of each inference (intermediate lemma) *)
 let get_lemmas l = List.map fst l
@@ -120,7 +132,7 @@ let rec last_goal l =
 let rec get_axioms inferences lemmas =
   match inferences with
   | [] -> []
-  | (name, prems)::l' -> check_axiom prems lemmas @ get_axioms l' lemmas
+  | (_, prems)::l' -> check_axiom prems lemmas @ get_axioms l' lemmas
 
 and check_axiom l lemmas =
   match l with
@@ -143,6 +155,7 @@ let _ =
   match Sys.argv with
   | [|_ ; fname|] ->
      let res : Phrase.tpphrase list = parse_file fname in
+     let avatar_definitions = declare_avatar_definitions res in
      let inferences = get_inferences res in
      let premises = get_sequent inferences in
      let axioms = uniq (get_axioms premises (get_lemmas premises)) [] in
@@ -163,7 +176,7 @@ let _ =
         (fun x y -> printf "%s : %s\n%!" x (Expr.expr_to_string y))
         Phrase.name_formula_tbl *)
      insert_symbols Phrase.name_formula_tbl;
-     Signature.generate_signature_file name Signature.symbols_table;
+     Signature.generate_signature_file name Signature.symbols_table avatar_definitions;
      let liste = Proof.order_lemmas premises l_goal in
      Proof.generate_dk name axioms name liste l_goal;
      Proof.generate_pkg name;

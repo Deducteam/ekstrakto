@@ -2,9 +2,9 @@ open Expr
 open Printf
 
 (* insert a require command for each step in the global proof *)
-let rec print_requires oc proof_tree m_name =
+let print_requires oc proof_tree m_name =
   List.iter
-    (fun (name, e) ->
+    (fun (name, _) ->
       fprintf oc "require %s.lemmas.%s as %s;\n" m_name name name)
     proof_tree
 let forbidden_idents = ["abort";"admit";"admitted";"apply";"as";"assert";"assertnot";
@@ -24,7 +24,7 @@ let escape_name s =
 
 (* add {|VAR|} pattern for each variable to avoid unicode characters
    and check if it belongs to signature or not *)
-let print_var v signame =
+let print_var v _ =
   let escaped_v = escape_name v in
   escaped_v
   (* if signame = "" then escaped_v else signame ^ "." ^ escaped_v *)
@@ -147,7 +147,7 @@ let rec print_lemmas oc (proof_tree, fixed_tree) =
 
 (* generate a global proof file that contains all the requirements and
    the proof term *)
-let rec generate_dk name l signame proof_tree goal =
+let generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
         fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
