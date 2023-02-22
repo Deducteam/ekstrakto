@@ -37,13 +37,13 @@ let get_type oc (b, n) =
     Hashtbl.iter
       (fun x n -> printf "def %s : %s.\n%!" x (get_type (fst n) (snd n))) ht *)
 
+
 (* Generating signature file *)
 let generate_signature_file name ht =
   let name_dk = name ^ ".lp" in
   let name = Sys.getcwd() ^ "/" ^ name ^ "/" ^ name_dk in
   let oc = open_out name in
-  fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
-  fprintf oc "require open logic.zen;\n";
+  fprintf oc "%s" Proof.global_requires;
   Hashtbl.iter
     (fun x n -> fprintf oc "constant symbol %s : %a;\n" (Proof.escape_name x) get_type n) ht;
   close_out oc;
