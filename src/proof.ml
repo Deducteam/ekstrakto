@@ -18,8 +18,8 @@ let forbidden_idents = ["abort";"admit";"admitted";"apply";"as";"assert";"assert
                         "verbose";"why3";"with"; "_"]
 let escape_name s =
   let id_regex = Str.regexp "^[a-zA-Z_][a-zA-Z0-9_]*$" in
-  if Str.string_match id_regex s 0 
-    && List.for_all ((<>) s) forbidden_idents 
+  if Str.string_match id_regex s 0
+    && List.for_all ((<>) s) forbidden_idents
     then s else "{|" ^ s ^ "|}"
 
 (* add {|VAR|} pattern for each variable to avoid unicode characters
@@ -114,7 +114,7 @@ let rec print_args oc (args, proof_tree) =
        fprintf oc "%a %a" print_arg (x, proof_tree)
          print_args (l', proof_tree)
 
-let rec get_lemmas proof_tree = 
+let rec get_lemmas proof_tree =
   match proof_tree with
   |[] -> []
   |(x, _)::l' -> x::(get_lemmas l')
@@ -139,19 +139,26 @@ let rec print_lemmas oc (proof_tree, fixed_tree) =
     | [g, la] ->
        fprintf oc
          "opaque symbol lemmas_%s ≔ %s.delta %a;\n"
-         g g print_args (la, fixed_tree) 
+         g g print_args (la, fixed_tree)
     | (g, la)::l'->
        fprintf oc
          "opaque symbol lemmas_%s ≔ %s.delta %a;\n%a"
          g g print_args (la, fixed_tree) print_lemmas (l', fixed_tree)
+
+let global_requires =
+  List.fold_left (fun s a -> s ^ " Logic.Zenon." ^ a)
+    "require open"
+    ["FOL"; "LL"; "ND"; "ND_eps"; "ND_eps_full"; "ND_eps_aux"; "LL_ND"]
+  ^
+    ";\nrequire open Logic.Zenon.zen;\n"
+
 
 (* generate a global proof file that contains all the requirements and
    the proof term *)
 let rec generate_dk name l signame proof_tree goal =
     let name_file = ( (Sys.getcwd ())^ "/" ^ name ^ "/proof_" ^ name ^ ".lp") in
     let oc = open_out name_file in
-        fprintf oc "require open logic.fol logic.ll logic.nd logic.nd_eps logic.nd_eps_full logic.nd_eps_aux logic.ll_nd;\n";
-        fprintf oc "require open logic.zen;\n\n";
+        fprintf oc "%s" global_requires;
         fprintf oc "require open %s.%s;\n" name name;
         print_requires oc proof_tree name;
         fprintf oc "\n";
@@ -174,7 +181,7 @@ let generate_pkg name =
         printf "Generating package file for [%s] \027[32m OK \027[0m\n%!" name_file
 
 (* print builtins *)
-let print_builtins oc name = 
+let print_builtins oc name =
   fprintf oc "set builtin \"A\" ≔ axiom_A\n";
   fprintf oc "set builtin \"B\" ≔ proof_%s\n" name;
   fprintf oc "set builtin \"iota\" ≔ iota_b\n";
