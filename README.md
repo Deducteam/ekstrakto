@@ -1,6 +1,15 @@
-# ekstrakto
+# Ekstrakto
 
-A tool to extract `TPTP` problems from a `TSTP` trace and reconstruct the proof in `lambdapi`.
+Tool to translate a proof in the [TSTP](https://tptp.org/TSTP/) into the [lambdapi](https://github.com/Deducteam/lambdapi) format.
+
+## How does it work?
+
+Ekstrakto generates a TPTP problem for each proof step in the TSTP input file, a Lambdapi signature file, and a Lambdapi file providing a complete proof assuming a Lambdapi file for each proof step.
+
+One can then automatically generate a Lambdapi proof file for each proof step by running an automated theorem provers able to output Dedukti or Lambdapi proofs:
+- [ZenonModulo](https://github.com/Deducteam/zenon_modulo)
+- [ArchSAT](https://github.com/Gbury/archsat)
+- [iProverModulo](https://github.com/gburel/iProverModulo)
 
 ## Installation
     
@@ -8,79 +17,53 @@ A tool to extract `TPTP` problems from a `TSTP` trace and reconstruct the proof 
 
 - `OCaml >= 4.05.1`
 - `ocamlbuild`
-- `zenon_modulo` (https://github.com/elhaddadyacine/zenon_modulo)
-- `lambdapi` (optional) (https://github.com/Deducteam/lambdapi)
-- `eprover` or any first order automated prover (optional) (https://github.com/eprover/eprover)
+- [modulo_lp branch of zenon_modulo](https://github.com/Deducteam/zenon_modulo/tree/modulo_lp)
+- [lambdapi](https://github.com/Deducteam/lambdapi)
 
 ### Compilation
 
-First, you need to get the sources :
+First, you need to get the sources:
 ```bash
     git clone https://github.com/elhaddadyacine/ekstrakto.git
 ```
-To compile the tool, just type :
+To compile the tool, just type:
 
 ```bash
+    cd ekstrakto
     make
 ```
-It will generate a native file named `spliter.native` if you want to install the tool in your binary installation folder (where ocaml is installed, if ocaml is installed in the `/usr/bin/` directory then you need to call `make install` with `sudo`) use :
+It will generate an executable file named `spliter.native`.
+If you want to install it, do:
 
 ```bash
-    make install
+    sudo make install
 ```
 
 ## Usage
 
-In order to use `ekstrakto` you need to have a `TSTP` trace (the repository contains an example (see `examples` folder) named `trace.p`).
-You just need to type :
+Just call `ekstrakto` with an input TSTP file as argument:
 ```bash
-    ./spliter.native path/to/your/tstp/trace/file
+    ekstrakto $trace.p
 ```
 
-Or (if you installed the tool)
-```bash
-    ekstrakto path/to/your/tstp/trace/file
-```
+Ekstrakto creates in a folder `$trace`:
+- a sub-folder `lemmas` with all the `TPTP` problems
+- a Lambdapi signature file `$trace.lp`
+- a Lambdapi proof file `proof_$trace.lp`
+- a `lambdapi.pkg` file
+- a `Makefile` to produce the Lambdapi proofs and check them.
 
-The program will create a folder which has the same name as the trace.
-It generates all the sub problems in the `TPTP` format (inside `lemmas` folder) and add a signature file in `lambdapi` format.
-It generates also a Makefile to produce proofs in `lambdapi` and typecheck them.
-And finally, produce a proof (named `proof_<TRACENAME>.lp`) using all sub solutions in `lambdapi`.
+Then, one can call `make` to generate a Lambdapi proof file for each TPTP problem using `zenon_modulo`, and check them using `lambdapi` (make sure that `zenon_modulo` and `lambdapi` are in your `$PATH`).
 
-You need to have `zenon_modulo` (use `modulo_lp` branch) and `lambdapi` installed to generate the proofs of each sub problem and then generate the `.lpo` files with `lambdapi`
 #### Example
 
-A trace file named `trace.p` (in `examples`) in the repository contains an example.
-
-The program will generate 3 files, logic folder (that contains `zenon_modulo` logic files), 1 signature file, a Makefile and 1 proof file :
-- lemmas/c_0_5.p
-- lemmas/c_0_6.p
-- lemmas/c_0_7.p
-- logic/
-- trace.lp
-- Makefile
-- proof_trace.lp
-
-It will produce the proof of each sub problem and typecheck them with `lambdapi`  :
+In the folder `examples`, do:
 ```bash
-cd trace
-make proof
+    ../spliter.native trace.p
+    cd trace
+    make
 ```
-Files produced : 
-```bash
-lemmas/c_0_5.lp         # the proof of each problem (with zenon_modulo)
-lemmas/c_0_6.lp         # ...
-lemmas/c_0_7.lp         # ...
-
-lemmas/c_0_5.lpo        # typeching of each proof (with lambdapi)
-lemmas/c_0_6.lpo        # ...
-lemmas/c_0_7.lpo        # ...
-
-trace.lpo               # the signature of the proof (contains all used symbols)
-proof_trace.lpo         # the global proof (contains the combination of sub solutions)
-```
-
 
 ## Contact
 
-Mohamed Yacine EL HADDADD <elhaddad@lsv.fr>
+<dedukti-dev@inria.fr>
